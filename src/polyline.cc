@@ -1,13 +1,12 @@
-#include "motis/geo/polyline.h"
+#include "geo/polyline.h"
 
 #include "boost/geometry.hpp"
 
-#include "motis/geo/constants.h"
+#include "geo/constants.h"
 
-#include "motis/geo/detail/register_latlng.h"
-#include "motis/geo/detail/register_polygon.h"
+#include "geo/detail/register_latlng.h"
+#include "geo/detail/register_polygon.h"
 
-namespace motis {
 namespace geo {
 
 double length(polyline const& p) {
@@ -21,4 +20,3 @@ polyline simplify(polyline const& p) {
 }
 
 }  // namespace geo
-}  // namespace motis

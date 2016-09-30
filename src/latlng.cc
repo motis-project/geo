@@ -1,13 +1,12 @@
-#include "motis/geo/latlng.h"
+#include "geo/latlng.h"
 
 #include <cmath>
 
 #include "boost/geometry.hpp"
 
-#include "motis/geo/constants.h"
-#include "motis/geo/detail/register_latlng.h"
+#include "geo/constants.h"
+#include "geo/detail/register_latlng.h"
 
-namespace motis {
 namespace geo {
 
 double distance(latlng const& a, latlng const& b) {
@@ -31,4 +30,3 @@ double bearing(latlng const& p1, latlng const& p2) {
 }
 
 }  // namespace geo
-}  // namespace motis

@@ -1,13 +1,12 @@
-#include "motis/geo/polygon.h"
+#include "geo/polygon.h"
 
 #include <fstream>
 
 #include "boost/geometry.hpp"
 
-#include "motis/geo/detail/register_latlng.h"
-#include "motis/geo/detail/register_polygon.h"
+#include "geo/detail/register_latlng.h"
+#include "geo/detail/register_polygon.h"
 
-namespace motis {
 namespace geo {
 
 simple_polygon read_poly_file(std::string const& filename) {
@@ -38,4 +37,3 @@ bool within(latlng const& point, simple_polygon const& polygon) {
 }
 
 }  // namespace geo
-}  // namespace motis
