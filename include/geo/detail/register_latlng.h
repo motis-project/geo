@@ -1,7 +1,6 @@
 #pragma once
 
 #include "boost/geometry.hpp"
-
 #include "boost/geometry/geometries/register/point.hpp"
 
 #include "geo/latlng.h"

@@ -1,6 +1,8 @@
 #include "geo/polygon.h"
 
 #include <fstream>
+#include <istream>
+#include <string>
 
 #include "boost/geometry.hpp"
 
