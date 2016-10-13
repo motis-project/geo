@@ -39,30 +39,52 @@
 
 namespace geo {
 
+/* +------------------------------------------------------------------------+ */
+/* | data types                                                             | */
+/* +------------------------------------------------------------------------+ */
+
+using merc_coord_t = double;
+using pixel_coord_t = int64_t;
+
+template <typename T>
 struct xy {
-  xy(double const x, double const y) : x_(x), y_(y) {}
-  double x_, y_;
+  xy(T const x, T const y) : x_(x), y_(y) {}
+  T x_, y_;
 };
 
+using merc_xy = xy<merc_coord_t>;
+using pixel_xy = xy<pixel_coord_t>;
+
+template <typename T>
 struct bounds {
   bounds() = default;
-  bounds(double const minx, double const miny, double const maxx,
-         double const maxy)
+  bounds(T const minx, T const miny, T const maxx, T const maxy)
       : minx_(minx), miny_(miny), maxx_(maxx), maxy_(maxy) {}
 
-  double minx_, miny_, maxx_, maxy_;
+  T minx_, miny_, maxx_, maxy_;
 };
+
+using merc_bounds = bounds<merc_coord_t>;
+using pixel_bounds = bounds<pixel_coord_t>;
+
+/* +------------------------------------------------------------------------+ */
+/* | latlng <-> merc                                                        | */
+/* +------------------------------------------------------------------------+ */
 
 constexpr auto kMercEarthRadius = 6378137;
 constexpr auto kOriginShift = 2 * kPI * kMercEarthRadius / 2.0;
 
-inline xy latlng_to_merc(latlng const& pos) {
+inline merc_xy latlng_to_merc(latlng const& pos) {
   auto const x = pos.lng_ * kOriginShift / 180.0;
   auto const y =
       (std::log(std::tan((90 + pos.lat_) * kPI / 360.0)) / (kPI / 180.0)) *
       kOriginShift / 180.0;
   return {x, y};
 }
+
+/* +------------------------------------------------------------------------+ */
+/* | merc <-> pixel / google tile schema                                    | */
+/* +------------------------------------------------------------------------+ */
 
 template <int TileSize>
 struct webmercator {
@@ -74,8 +96,8 @@ struct webmercator {
     return kInitialResolution / (std::pow(2, z));
   }
 
-  static bounds tile_bounds_merc(uint32_t const x, uint32_t const y,
-                                 uint32_t const z) {
+  static merc_bounds tile_bounds_merc(uint32_t const x, uint32_t const y,
+                                      uint32_t const z) {
     auto const pixel_to_merc = [](uint32_t const p, uint32_t const z) {
       return p * resolution(z) - kOriginShift;
     };
@@ -89,16 +111,16 @@ struct webmercator {
     return {minx, miny, maxx, maxy};
   }
 
-  static bounds tile_bounds_px(uint32_t const x, uint32_t const y,
-                               uint32_t const z) {
+  static pixel_bounds tile_bounds_pixel(uint32_t const x, uint32_t const y,
+                                        uint32_t const z) {
     return {x * TileSize, y * TileSize, (x + 1) * TileSize, (y + 1) * TileSize};
   }
 
-  static double merc_to_pixel_x(double x, uint32_t z) {
+  static pixel_coord_t merc_to_pixel_x(merc_coord_t const x, uint32_t const z) {
     return (x + kOriginShift) / resolution(z);
   }
 
-  static double merc_to_pixel_y(double y, uint32_t z) {
+  static pixel_coord_t merc_to_pixel_y(merc_coord_t const y, uint32_t const z) {
     auto const map_size = TileSize << z;  // constexpr
     return map_size - ((y + kOriginShift) / resolution(z));
   }
