@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 
 #include "geo/constants.h"
@@ -72,34 +74,40 @@ using pixel_bounds = bounds<pixel_coord_t>;
 /* +------------------------------------------------------------------------+ */
 
 constexpr auto kMercEarthRadius = 6378137;
-constexpr auto kOriginShift = 2 * kPI * kMercEarthRadius / 2.0;
+constexpr auto kMercOriginShift = kPI * kMercEarthRadius;
+constexpr auto kMercMaxLatitude = 85.0511287798;
 
 inline merc_xy latlng_to_merc(latlng const& pos) {
-  auto const x = pos.lng_ * kOriginShift / 180.0;
-  auto const y =
-      (std::log(std::tan((90 + pos.lat_) * kPI / 360.0)) / (kPI / 180.0)) *
-      kOriginShift / 180.0;
-  return {x, y};
+  constexpr auto d = kPI / 180.;
+  auto const lat =
+      std::max(std::min(kMercMaxLatitude, pos.lat_), -kMercMaxLatitude);
+  auto const sin = std::sin(lat * d);
+
+  return {kMercEarthRadius * pos.lng_ * d,
+          kMercEarthRadius * std::log((1. + sin) / (1. - sin)) / 2.};
+}
+
+inline latlng merc_to_latlng(merc_xy const& xy) {
+  constexpr auto d = 180. / kPI;
+
+  return {(2.0 * std::atan(std::exp(xy.y_ / kMercEarthRadius)) - (kPI / 2)) * d,
+          xy.x_ * d / kMercEarthRadius};
 }
 
 /* +------------------------------------------------------------------------+ */
 /* | merc <-> pixel / google tile schema                                    | */
 /* +------------------------------------------------------------------------+ */
 
-template <int TileSize>
+template <int TileSize, int MaxZoomLevel = 20>
 struct webmercator {
-  static constexpr auto kInitialResolution =
-      2 * kPI * kMercEarthRadius / TileSize;
 
-  // XXX make this constexpr: http://stackoverflow.com/a/34465458
-  static double resolution(uint32_t const z) {
-    return kInitialResolution / (std::pow(2, z));
-  }
+  static constexpr auto kTileSize = TileSize;
+  static constexpr auto kMaxZoomLevel = MaxZoomLevel;
 
   static merc_bounds tile_bounds_merc(uint32_t const x, uint32_t const y,
                                       uint32_t const z) {
     auto const pixel_to_merc = [](uint32_t const p, uint32_t const z) {
-      return p * resolution(z) - kOriginShift;
+      return p * resolution(z) - kMercOriginShift;
     };
 
     auto const y_reverse = (std::pow(2, z) - 1) - y;
@@ -117,12 +125,62 @@ struct webmercator {
   }
 
   static pixel_coord_t merc_to_pixel_x(merc_coord_t const x, uint32_t const z) {
-    return (x + kOriginShift) / resolution(z);
+    return (x + kMercOriginShift) / resolution(z);
   }
 
   static pixel_coord_t merc_to_pixel_y(merc_coord_t const y, uint32_t const z) {
-    auto const map_size = TileSize << z;  // constexpr
-    return map_size - ((y + kOriginShift) / resolution(z));
+    return std::round(map_size(z) - ((y + kMercOriginShift) / resolution(z)));
+  }
+
+  static pixel_xy merc_to_pixel(merc_xy const& merc, uint32_t const z) {
+    return {merc_to_pixel_x(merc.x_, z), merc_to_pixel_y(merc.y_, z)};
+  }
+
+  static merc_coord_t pixel_to_merc_x(pixel_coord_t const x, uint32_t const z) {
+    return x * resolution(z) - kMercOriginShift;
+  }
+
+  static merc_coord_t pixel_to_merc_y(pixel_coord_t const y, uint32_t const z) {
+    return (map_size(z) - y) * resolution(z) - kMercOriginShift;
+  }
+
+  constexpr static double resolution(uint32_t const z) {
+    assert(z <= MaxZoomLevel);
+
+    struct look_up_table {
+      constexpr look_up_table() : values() {
+        constexpr auto kInitialResolution =
+            2 * kPI * kMercEarthRadius / TileSize;
+        size_t s = 1;
+        for (auto i = 0; i <= MaxZoomLevel; ++i) {
+          values[i] = kInitialResolution / s;
+          s += s;
+        }
+      }
+
+      double values[MaxZoomLevel + 1];
+    };
+    constexpr auto lut = look_up_table{};
+
+    return lut.values[z];
+  }
+
+  constexpr static size_t map_size(uint32_t const z) {
+    assert(z <= MaxZoomLevel);
+
+    struct look_up_table {
+      constexpr look_up_table() : values() {
+        size_t s = kTileSize;
+        for (auto i = 0; i <= MaxZoomLevel; ++i) {
+          values[i] = s;
+          s += s;
+        }
+      }
+      size_t values[MaxZoomLevel + 1];
+    };
+    constexpr auto lut = look_up_table{};
+
+    return lut.values[z];
   }
 };
 
