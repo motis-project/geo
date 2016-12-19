@@ -28,7 +28,7 @@ struct point_rtree {
   std::vector<size_t> in_radius(latlng const& center,
                                 double const max_radius) const;
 
- private:
+private:
   struct impl;
   std::unique_ptr<impl> impl_;
 };
@@ -39,6 +39,16 @@ point_rtree make_point_rtree(C const& container, F fun) {
   std::vector<point_rtree::value_t> index;
   for (auto const& e : container) {
     index.emplace_back(fun(e), i++);
+  }
+  return point_rtree{index};
+}
+
+template <typename C>
+point_rtree make_point_rtree(C const& container) {
+  auto i = 0;
+  std::vector<point_rtree::value_t> index;
+  for (auto const& e : container) {
+    index.emplace_back(e, i++);
   }
   return point_rtree{index};
 }
