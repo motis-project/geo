@@ -10,10 +10,12 @@ namespace geo {
 struct point_rtree {
   using value_t = std::pair<latlng, size_t>;
 
+  point_rtree();
+  ~point_rtree();
+
   explicit point_rtree(std::vector<value_t> const&);
   point_rtree(point_rtree&&);
   point_rtree& operator=(point_rtree&&);
-  ~point_rtree();
 
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
       latlng const& center, double const min_radius,

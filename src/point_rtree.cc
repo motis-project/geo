@@ -15,6 +15,7 @@ struct point_rtree::impl {
   using box_t = boost::geometry::model::box<latlng>;
   using rtree_t = bgi::rtree<value_t, bgi::quadratic<16>>;
 
+  impl() = default;
   explicit impl(std::vector<value_t> const& index) : rtree_(index) {}
 
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
@@ -71,11 +72,13 @@ struct point_rtree::impl {
   rtree_t rtree_;
 };
 
+point_rtree::point_rtree() : impl_(std::make_unique<point_rtree::impl>()) {}
+point_rtree::~point_rtree() = default;
+
 point_rtree::point_rtree(std::vector<value_t> const& index)
     : impl_(std::make_unique<point_rtree::impl>(index)) {}
 point_rtree::point_rtree(point_rtree&&) = default;
 point_rtree& point_rtree::operator=(point_rtree&&) = default;
-point_rtree::~point_rtree() = default;
 
 std::vector<std::pair<double, size_t>> point_rtree::in_radius_with_distance(
     latlng const& center, double const min_radius,
