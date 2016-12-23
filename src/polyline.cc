@@ -5,7 +5,7 @@
 #include "geo/constants.h"
 
 #include "geo/detail/register_latlng.h"
-#include "geo/detail/register_polygon.h"
+#include "geo/detail/register_polyline.h"
 
 namespace geo {
 
