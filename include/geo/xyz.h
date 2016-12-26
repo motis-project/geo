@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <limits>
 
 #include "geo/constants.h"
 #include "geo/latlng.h"
@@ -31,6 +32,23 @@ inline double haversine_distance(xyz const& a, xyz const& b) {
   auto const dz = a.z_ - b.z_;
 
   auto const r = std::sqrt(dx * dx + dy * dy + dz * dz);
+  return 2 * kEarthRadiusMeters * std::asin(r);
+}
+
+inline double min_haversine_distance(xyz const& a, std::vector<xyz> const& bs) {
+  auto d_min = std::numeric_limits<double>::infinity();
+  for (auto const& b : bs) {
+    auto const dx = a.x_ - b.x_;
+    auto const dy = a.y_ - b.y_;
+    auto const dz = a.z_ - b.z_;
+
+    auto const d = dx * dx + dy * dy + dz * dz;
+    if (d < d_min) {
+      d_min = d;
+    }
+  }
+
+  auto const r = std::sqrt(d_min);
   return 2 * kEarthRadiusMeters * std::asin(r);
 }
 
