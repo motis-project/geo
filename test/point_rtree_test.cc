@@ -11,7 +11,7 @@ TEST_CASE("point rtree") {
 
   auto const rtree = make_point_rtree(points, [](auto const& e) { return e; });
 
-  auto const mensa = latlng{49.8756276, 8.6577833};
+  auto const mensa = geo::latlng{49.8756276, 8.6577833};
 
   SECTION("finds algo") {
     auto const r = rtree.in_radius(mensa, 450);
