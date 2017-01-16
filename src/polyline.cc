@@ -19,4 +19,14 @@ polyline simplify(polyline const& p) {
   return result;
 }
 
+polyline extract(polyline const& p, size_t const from, size_t const to) {
+  geo::polyline result;
+  result.reserve(std::abs(static_cast<int>(from) - static_cast<int>(to)) + 1);
+  int const inc = (from < to) ? 1 : -1;
+  for (int i = from; i != (static_cast<int>(to) + inc); i += inc) {
+    result.push_back(p[i]);
+  }
+  return result;
+}
+
 }  // namespace geo
