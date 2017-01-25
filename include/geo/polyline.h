@@ -37,4 +37,28 @@ polyline simplify(polyline const& line, uint32_t const z) {
 
 polyline extract(polyline const&, size_t const from, size_t const to);
 
+inline std::vector<double> serialize(polyline const& p) {
+  std::vector<double> result;
+  result.resize(p.size() * 2);
+
+  for (auto i = 0u; i < p.size(); ++i) {
+    result[i * 2] = p[i].lat_;
+    result[i * 2 + 1] = p[i].lng_;
+  }
+
+  return result;
+}
+
+inline polyline deserialize(std::vector<double> const& vec) {
+  assert(vec.size() % 2 == 0);
+  polyline result;
+  result.reserve(vec.size() / 2);
+
+  for (auto i = 0u; i < vec.size(); i += 2) {
+    result.emplace_back(vec[i], vec[i + 1]);
+  }
+
+  return result;
+}
+
 }  // namespace geo
