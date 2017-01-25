@@ -151,10 +151,8 @@ struct webmercator {
       constexpr look_up_table() : values() {
         constexpr auto kInitialResolution =
             2 * kPI * kMercEarthRadius / TileSize;
-        size_t s = 1;
         for (auto i = 0; i <= MaxZoomLevel; ++i) {
-          values[i] = kInitialResolution / s;
-          s += s;
+          values[i] = kInitialResolution / (1 << i);
         }
       }
 
@@ -167,20 +165,7 @@ struct webmercator {
 
   constexpr static size_t map_size(uint32_t const z) {
     assert(z <= MaxZoomLevel);
-
-    struct look_up_table {
-      constexpr look_up_table() : values() {
-        size_t s = kTileSize;
-        for (auto i = 0; i <= MaxZoomLevel; ++i) {
-          values[i] = s;
-          s += s;
-        }
-      }
-      size_t values[MaxZoomLevel + 1];
-    };
-    constexpr auto lut = look_up_table{};
-
-    return lut.values[z];
+    return static_cast<size_t>(kTileSize) << z;
   }
 };
 
