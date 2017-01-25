@@ -13,9 +13,9 @@ double length(polyline const& p) {
   return boost::geometry::length(p) * kEarthRadiusMeters;
 }
 
-polyline simplify(polyline const& p) {
+polyline simplify(polyline const& p, double const max_distance) {
   polyline result;
-  boost::geometry::simplify(p, result, 0.0001);  // TODO constant -> zoom levels
+  boost::geometry::simplify(p, result, max_distance);
   return result;
 }
 
