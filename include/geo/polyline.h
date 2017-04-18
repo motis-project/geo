@@ -49,13 +49,14 @@ inline std::vector<double> serialize(polyline const& p) {
   return result;
 }
 
-inline polyline deserialize(std::vector<double> const& vec) {
-  assert(vec.size() % 2 == 0);
+template<typename Container>
+inline polyline deserialize(Container const& container) {
+  assert(container.size() % 2 == 0);
   polyline result;
-  result.reserve(vec.size() / 2);
+  result.reserve(container.size() / 2);
 
-  for (auto i = 0u; i < vec.size(); i += 2) {
-    result.emplace_back(vec[i], vec[i + 1]);
+  for (auto i = 0u; i < container.size(); i += 2) {
+    result.emplace_back(container[i], container[i + 1]);
   }
 
   return result;
