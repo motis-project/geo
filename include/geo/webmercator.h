@@ -50,7 +50,14 @@ using pixel_coord_t = int64_t;
 
 template <typename T>
 struct xy {
+  xy() = default;
+  explicit xy(T const i) : xy(i, i) {}
   xy(T const x, T const y) : x_(x), y_(y) {}
+
+  friend bool operator==(xy const& lhs, xy const& rhs) {
+    return std::tie(lhs.x_, lhs.y_) == std::tie(rhs.x_, rhs.y_);
+  }
+
   T x_, y_;
 };
 
