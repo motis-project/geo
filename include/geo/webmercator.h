@@ -58,6 +58,10 @@ struct xy {
     return std::tie(lhs.x_, lhs.y_) == std::tie(rhs.x_, rhs.y_);
   }
 
+  friend std::ostream& operator<<(std::ostream& out, xy const& pos) {
+    return out << "(" << pos.x_ << ", " << pos.y_ << ")";
+  }
+
   T x_, y_;
 };
 
