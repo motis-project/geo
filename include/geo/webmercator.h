@@ -126,8 +126,7 @@ struct webmercator {
     return {minx, miny, maxx, maxy};
   }
 
-  static pixel_bounds tile_bounds_pixel(uint32_t const x, uint32_t const y,
-                                        uint32_t const z) {
+  static pixel_bounds tile_bounds_pixel(uint32_t const x, uint32_t const y) {
     return {x * TileSize, y * TileSize, (x + 1) * TileSize, (y + 1) * TileSize};
   }
 
