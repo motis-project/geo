@@ -179,4 +179,6 @@ struct webmercator {
   }
 };
 
+using default_webmercator = webmercator<4096>;
+
 }  // namespace geo
