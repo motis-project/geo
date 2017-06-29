@@ -10,6 +10,14 @@ struct tile {
   tile(uint32_t const x, uint32_t const y, uint32_t const z)
       : x_(x), y_(y), z_(z) {}
 
+  bool operator<(tile const& o) const {
+    return std::tie(z_, x_, y_) < std::tie(o.z_, o.x_, o.y_);
+  }
+
+  bool operator==(tile const& o) const {
+    return std::tie(z_, x_, y_) == std::tie(o.z_, o.x_, o.y_);
+  }
+
   uint32_t x_, y_, z_;
 };
 
