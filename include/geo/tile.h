@@ -4,6 +4,8 @@
 
 namespace geo {
 
+struct tile_range;
+
 struct tile {
   tile() = default;
 
@@ -18,11 +20,13 @@ struct tile {
     return std::tie(z_, x_, y_) == std::tie(o.z_, o.x_, o.y_);
   }
 
+  tile_range direct_children() const;
+
   uint32_t x_, y_, z_;
 };
 
 using tile_iterator_bounds = bounds<uint32_t>;
-tile_iterator_bounds make_no_bounds(uint32_t z) {
+inline tile_iterator_bounds make_no_bounds(uint32_t z) {
   return tile_iterator_bounds{0, 0, 1u << z, 1u << z};
 }
 
