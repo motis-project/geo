@@ -105,6 +105,9 @@ struct tile_range {
   tile_range() = default;
   tile_range(iterator begin, iterator end) : begin_(begin), end_(end) {}
 
+  iterator begin() { return begin_; }
+  iterator end() { return end_; }
+
   iterator begin() const { return begin_; }
   iterator end() const { return end_; }
 
