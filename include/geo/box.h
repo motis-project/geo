@@ -14,6 +14,8 @@ struct box {
         max_(-std::numeric_limits<double>::infinity(),
              -std::numeric_limits<double>::infinity()) {}
 
+  box(latlng min, latlng max) : min_(std::move(min)), max_(std::move(max)) {}
+
   explicit box(polyline const& line) : box{} { extend(line); }
 
   void extend(polyline const& line) {
@@ -33,6 +35,11 @@ struct box {
 
     min_.lat_ = std::min(min_.lat_, pos.lat_);
     min_.lng_ = std::min(min_.lng_, pos.lng_);
+  }
+
+  bool contains(latlng const& pos) const {
+    return pos.lat_ > min_.lat_ && pos.lat_ < max_.lat_ &&
+           pos.lng_ > min_.lng_ && pos.lng_ < max_.lng_;
   }
 
   latlng min_, max_;
