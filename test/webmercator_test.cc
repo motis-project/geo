@@ -88,6 +88,36 @@ TEST_CASE("merc to latlng", "unproject merc") {
   }
 }
 
+
+TEST_CASE("webmercator", "reversible") {
+  using proj = geo::webmercator<4096>;
+
+  auto const test = [](auto const& input, auto const z) {
+    auto const merc_a = proj::pixel_to_merc(input, z);
+    auto const latlng = geo::merc_to_latlng(merc_a);
+    auto const merc_b = geo::latlng_to_merc(latlng);
+    std::cout << latlng.lat_ << " " << latlng.lng_ << std::endl;
+
+    auto const output_a = proj::merc_to_pixel(merc_a, z);
+    auto const output_b = proj::merc_to_pixel(merc_b, z);
+
+    CHECK(merc_a.x_ == Approx(merc_b.x_));
+    CHECK(merc_a.y_ == Approx(merc_b.y_));
+    CHECK(input.x_ == Approx(output_a.x_).epsilon(1));
+    CHECK(input.y_ == Approx(output_a.y_).epsilon(1));
+    CHECK(input.x_ == Approx(output_b.x_).epsilon(1));
+    CHECK(input.y_ == Approx(output_b.y_).epsilon(1));
+  };
+
+  test(geo::pixel_xy{0, 0}, 0);
+  test(geo::pixel_xy{50, 0}, 0);
+  test(geo::pixel_xy{50, 1}, 0);
+  test(geo::pixel_xy{50, 2}, 0);
+  test(geo::pixel_xy{100, 0}, 0);
+  test(geo::pixel_xy{1000, 0}, 0);
+}
+
+
 TEST_CASE("pixel map size") {
   SECTION("tile pyramid") {
     using proj = geo::webmercator<4096>;
