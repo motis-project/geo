@@ -7,10 +7,12 @@
 TEST_CASE("simplify_mask polyline (simple)") {
   using proj = geo::webmercator<4096>;
 
+  auto const px2ll = [](auto const x, auto const y, auto const z) {
+    return geo::merc_to_latlng(proj::pixel_to_merc({x, y}, z));
+  };
+
   SECTION("all required") {
-    geo::polyline in{geo::merc_to_latlng(proj::pixel_to_merc({0, 0}, 0)),
-                     geo::merc_to_latlng(proj::pixel_to_merc({50, 0}, 0)),
-                     geo::merc_to_latlng(proj::pixel_to_merc({100, 0}, 0))};
+    geo::polyline in{px2ll(0, 0, 0), px2ll(50, 0, 0), px2ll(100, 0, 0)};
 
     auto const out = make_mask(in);
     REQUIRE(out.size() == 21);
@@ -20,11 +22,8 @@ TEST_CASE("simplify_mask polyline (simple)") {
     CHECK(out[0][1] == false);
     CHECK(out[0][2] == true);
   }
-
   SECTION("slight deviation") {
-    geo::polyline in{geo::merc_to_latlng(proj::pixel_to_merc({0, 0}, 0)),
-                     geo::merc_to_latlng(proj::pixel_to_merc({50, 1}, 0)),
-                     geo::merc_to_latlng(proj::pixel_to_merc({100, 0}, 0))};
+    geo::polyline in{px2ll(0, 0, 0), px2ll(50, 1, 0), px2ll(100, 0, 0)};
 
     auto const out = make_mask(in);
     REQUIRE(out.size() == 21);
@@ -44,22 +43,50 @@ TEST_CASE("simplify_mask polyline (simple)") {
     CHECK(out2[0][2] == true);
   }
 
-  // SECTION("another level") {
-  //   geo::polyline in{geo::merc_to_latlng(proj::pixel_to_merc({20, 0}, 10)),
-  //                    geo::merc_to_latlng(proj::pixel_to_merc({21, 25}, 10)),
-  //                    geo::merc_to_latlng(proj::pixel_to_merc({20, 50}, 10))};
+  SECTION("recursion") {
+    geo::polyline in{px2ll(0, 0, 0), px2ll(50, 1, 0), px2ll(100, 0, 0),
+                     px2ll(100, 100, 0)};
 
-  //   auto const out = simplification_mask(in);
-  //   REQUIRE(out.size() == 21);
-  //   REQUIRE(out[0].size() == 3);
+    auto const out = make_mask(in, 2);
+    REQUIRE(out.size() == 21);
 
-  //   for(auto z = 0; z < 10; ++z) {
+    REQUIRE(out[0].size() == 4);
+    CHECK(out[0][0] == true);
+    CHECK(out[0][1] == false);
+    CHECK(out[0][2] == true);
+    CHECK(out[0][3] == true);
 
-  //   for (auto i = 0; i < 3; ++i) {
-  //     CAPTURE(i);
-  //     CHECK(out[0][i] == true);
-  //   }
-  //   }
+    for (auto z = 1; z < 21; ++z) {
+      CAPTURE(z);
+      REQUIRE(out[z].size() == 4);
+      CHECK(out[z][0] == true);
+      CHECK(out[z][1] == true);
+      CHECK(out[z][2] == true);
+      CHECK(out[z][3] == true);
+    }
+  }
 
-  // }
+  SECTION("mid level") {
+    geo::polyline in{px2ll(20, 0, 10), px2ll(21, 25, 10), px2ll(20, 50, 10)};
+
+    auto const out = make_mask(in);
+    REQUIRE(out.size() == 21);
+
+    for (auto z = 0; z <= 10; ++z) {
+      CAPTURE(z);
+      REQUIRE(out[z].size() == 3);
+      CHECK(out[z][0] == true);
+      CHECK(out[z][1] == false);
+      CHECK(out[z][2] == true);
+    }
+
+    for (auto z = 11; z < 21; ++z) {
+      CAPTURE(z);
+      REQUIRE(out[z].size() == 3);
+      for (auto i = 0; i < 3; ++i) {
+        CAPTURE(i);
+        CHECK(out[z][i] == true);
+      }
+    }
+  }
 }

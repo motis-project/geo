@@ -15,14 +15,14 @@ using proj_xy = xy<double>;
 
 proj_xy proj_pt_on_segment(pixel_xy const& source, pixel_xy const& target,
                            pixel_xy const& coord) {
-  pixel_xy const slope_vector(target.y_ - source.y_, target.x_ - source.x_);
-  pixel_xy const rel_coord(coord.y_ - source.y_, coord.x_ - source.x_);
+  pixel_xy const slope_vec{target.y_ - source.y_, target.x_ - source.x_};
+  pixel_xy const rel_coord{coord.y_ - source.y_, coord.x_ - source.x_};
 
   // dot product of two un-normed vectors
   double const unnormed_ratio =
-      slope_vector.x_ * rel_coord.x_ + slope_vector.y_ * rel_coord.y_;
+      slope_vec.x_ * rel_coord.x_ + slope_vec.y_ * rel_coord.y_;
   double const sq_length =
-      slope_vector.x_ * slope_vector.x_ + slope_vector.y_ * slope_vector.y_;
+      slope_vec.x_ * slope_vec.x_ + slope_vec.y_ * slope_vec.y_;
 
   if (sq_length < std::numeric_limits<double>::epsilon()) {
     return {static_cast<double>(source.x_), static_cast<double>(source.y_)};
@@ -40,24 +40,29 @@ uint64_t sq_perpendicular_dist(pixel_xy const& start, pixel_xy const& target,
   auto const proj = proj_pt_on_segment(start, target, test);
   auto const dx = proj.x_ - test.x_;
   auto const dy = proj.y_ - test.y_;
-
-  std::cout << "d " << dx << " " << dy << std::endl;
   return dx * dx + dy * dy;
 }
 
 using range_t = std::pair<size_t, size_t>;
 using stack_t = std::stack<range_t, std::vector<range_t>>;
 
-void process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
+bool process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
                    stack_t& stack, std::vector<bool>& mask) {
   assert(stack.empty());
 
   auto last = 0;
   for (auto i = 1u; i < mask.size(); ++i) {
     if (mask[i]) {
-      stack.emplace(last, i);
+      if (i - last > 1) {
+        stack.emplace(last, i);
+      }
+
       last = i;
     }
+  }
+
+  if (stack.empty()) {
+    return true;
   }
 
   while (!stack.empty()) {
@@ -70,8 +75,6 @@ void process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
     for (auto idx = pair.first + 1; idx != pair.second; ++idx) {
       auto const dist =
           sq_perpendicular_dist(line[pair.first], line[pair.second], line[idx]);
-
-      std::cout << "> " << idx << " " << dist << " " << threshold << std::endl;
 
       if (dist > max_dist && dist >= threshold) {
         farthest_entry_index = idx;
@@ -89,6 +92,8 @@ void process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
       }
     }
   }
+
+  return false;
 }
 
 simplify_mask_t make_mask(polyline const& input,
@@ -102,18 +107,8 @@ simplify_mask_t make_mask(polyline const& input,
   line.reserve(input.size());
   std::transform(
       begin(input), end(input), std::back_inserter(line), [](auto const& in) {
-        // std::cout << "in: " << in.lat_ << " " << in.lng_ << std::endl;
-
-        // auto foo = proj::merc_to_pixel(latlng_to_merc(in), 0);
-        // std::cout << "in: " << foo.x_ << " " << foo.y_ << std::endl;
-
         return proj::merc_to_pixel(latlng_to_merc(in), kMaxSimplifyZoomLevel);
       });
-
-  std::cout << " ################################" << std::endl;
-  for (auto i = 0u; i < line.size(); ++i) {
-    std::cout << i << ": " << line[i].x_ << " " << line[i].y_ << std::endl;
-  }
 
   simplify_mask_t result;
 
@@ -126,20 +121,23 @@ simplify_mask_t make_mask(polyline const& input,
   stack_t stack{stack_mem};
 
   for (auto z = 0; z <= kMaxSimplifyZoomLevel; ++z) {
-    // uint64_t const threshold =
-    //     static_cast<uint64_t>(pixel_precision * pixel_precision)
-    //     << (kMaxSimplifyZoomLevel - z);
-    // // uint64_t const threshold = delta * delta;
-
     uint64_t const delta = static_cast<uint64_t>(pixel_precision)
                            << (kMaxSimplifyZoomLevel - z);
     uint64_t const threshold = delta * delta;
 
-    process_level(line, threshold, stack, mask);
-    result.push_back(mask);
+    auto const done = process_level(line, threshold, stack, mask);
 
-    // TODO early termination
+    if (done) {
+      for (auto i = z; i <= kMaxSimplifyZoomLevel; ++i) {
+        result.push_back(mask);
+      }
+      break;
+    }
+
+    result.push_back(mask);
   }
+
+  assert(result.size() == kMaxSimplifyZoomLevel + 1);
 
   return result;
 }
