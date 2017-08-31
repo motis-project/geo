@@ -1,6 +1,10 @@
-#include "geo/simplify.h"
+#include "geo/simplify_mask.h"
 
+#include <iostream>
 #include <stack>
+
+#include "geo/constants.h"
+#include "geo/webmercator.h"
 
 namespace geo {
 
@@ -44,8 +48,8 @@ uint64_t sq_perpendicular_dist(pixel_xy const& start, pixel_xy const& target,
 using range_t = std::pair<size_t, size_t>;
 using stack_t = std::stack<range_t, std::vector<range_t>>;
 
-void simplify_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
-                    stack_t& stack, std::vector<bool>& mask) {
+void process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
+                   stack_t& stack, std::vector<bool>& mask) {
   assert(stack.empty());
 
   auto last = 0;
@@ -87,8 +91,8 @@ void simplify_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
   }
 }
 
-simplify_mask_t simplification_mask(polyline const& input,
-                                    uint32_t const pixel_precision) {
+simplify_mask_t make_mask(polyline const& input,
+                          uint32_t const pixel_precision) {
   if (input.size() < 2) {
     return simplify_mask_t{kMaxSimplifyZoomLevel + 1,
                            std::vector<bool>(input.size(), true)};
@@ -127,12 +131,11 @@ simplify_mask_t simplification_mask(polyline const& input,
     //     << (kMaxSimplifyZoomLevel - z);
     // // uint64_t const threshold = delta * delta;
 
-    uint64_t const delta =
-        static_cast<uint64_t>(pixel_precision)  << (kMaxSimplifyZoomLevel - z);
+    uint64_t const delta = static_cast<uint64_t>(pixel_precision)
+                           << (kMaxSimplifyZoomLevel - z);
     uint64_t const threshold = delta * delta;
-  
 
-    simplify_level(line, threshold, stack, mask);
+    process_level(line, threshold, stack, mask);
     result.push_back(mask);
 
     // TODO early termination
