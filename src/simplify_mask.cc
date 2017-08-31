@@ -11,35 +11,32 @@ namespace geo {
 constexpr auto kMaxSimplifyZoomLevel = 20;
 using proj = webmercator<4096, kMaxSimplifyZoomLevel>;
 
-using proj_xy = xy<double>;
-
-proj_xy proj_pt_on_segment(pixel_xy const& source, pixel_xy const& target,
-                           pixel_xy const& coord) {
+uint64_t sq_perpendicular_dist(pixel_xy const& source, pixel_xy const& target,
+                               pixel_xy const& test) {
   pixel_xy const slope_vec{target.y_ - source.y_, target.x_ - source.x_};
-  pixel_xy const rel_coord{coord.y_ - source.y_, coord.x_ - source.x_};
+  pixel_xy const rel_coord{test.y_ - source.y_, test.x_ - source.x_};
 
-  // dot product of two un-normed vectors
+  // dot product of two un-normalized vectors
   double const unnormed_ratio =
       slope_vec.x_ * rel_coord.x_ + slope_vec.y_ * rel_coord.y_;
   double const sq_length =
       slope_vec.x_ * slope_vec.x_ + slope_vec.y_ * slope_vec.y_;
 
+  double proj_x, proj_y;
+
   if (sq_length < std::numeric_limits<double>::epsilon()) {
-    return {static_cast<double>(source.x_), static_cast<double>(source.y_)};
+    proj_x = source.x_;
+    proj_y = source.y_;
+  } else {
+    double const normed_ratio = unnormed_ratio / sq_length;
+    double const clamped_ratio = std::max(std::min(normed_ratio, 1.), 0.);
+
+    proj_x = (1. - clamped_ratio) * source.x_ + target.x_ * clamped_ratio;
+    proj_y = (1. - clamped_ratio) * source.y_ + target.y_ * clamped_ratio;
   }
 
-  double const normed_ratio = unnormed_ratio / sq_length;
-  double const clamped_ratio = std::max(std::min(normed_ratio, 1.), 0.);
-
-  return proj_xy{(1. - clamped_ratio) * source.x_ + target.x_ * clamped_ratio,
-                 (1. - clamped_ratio) * source.y_ + target.y_ * clamped_ratio};
-}
-
-uint64_t sq_perpendicular_dist(pixel_xy const& start, pixel_xy const& target,
-                               pixel_xy const& test) {
-  auto const proj = proj_pt_on_segment(start, target, test);
-  auto const dx = proj.x_ - test.x_;
-  auto const dy = proj.y_ - test.y_;
+  auto const dx = proj_x - test.x_;
+  auto const dy = proj_y - test.y_;
   return dx * dx + dy * dy;
 }
 
@@ -96,8 +93,8 @@ bool process_level(std::vector<pixel_xy> const& line, uint64_t const threshold,
   return false;
 }
 
-simplify_mask_t make_mask(polyline const& input,
-                          uint32_t const pixel_precision) {
+simplify_mask_t make_simplify_mask(polyline const& input,
+                                   uint32_t const pixel_precision) {
   if (input.size() < 2) {
     return simplify_mask_t{kMaxSimplifyZoomLevel + 1,
                            std::vector<bool>(input.size(), true)};

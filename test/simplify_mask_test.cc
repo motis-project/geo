@@ -4,7 +4,7 @@
 #include "geo/simplify_mask.h"
 #include "geo/webmercator.h"
 
-TEST_CASE("simplify_mask polyline (simple)") {
+TEST_CASE("make_simplify_mask") {
   using proj = geo::webmercator<4096>;
 
   auto const px2ll = [](auto const x, auto const y, auto const z) {
@@ -14,7 +14,7 @@ TEST_CASE("simplify_mask polyline (simple)") {
   SECTION("all required") {
     geo::polyline in{px2ll(0, 0, 0), px2ll(50, 0, 0), px2ll(100, 0, 0)};
 
-    auto const out = make_mask(in);
+    auto const out = make_simplify_mask(in);
     REQUIRE(out.size() == 21);
     REQUIRE(out[0].size() == 3);
 
@@ -25,7 +25,7 @@ TEST_CASE("simplify_mask polyline (simple)") {
   SECTION("slight deviation") {
     geo::polyline in{px2ll(0, 0, 0), px2ll(50, 1, 0), px2ll(100, 0, 0)};
 
-    auto const out = make_mask(in);
+    auto const out = make_simplify_mask(in);
     REQUIRE(out.size() == 21);
     REQUIRE(out[0].size() == 3);
 
@@ -34,7 +34,7 @@ TEST_CASE("simplify_mask polyline (simple)") {
       CHECK(out[0][i] == true);
     }
 
-    auto const out2 = make_mask(in, 2);
+    auto const out2 = make_simplify_mask(in, 2);
     REQUIRE(out2.size() == 21);
     REQUIRE(out2[0].size() == 3);
 
@@ -47,7 +47,7 @@ TEST_CASE("simplify_mask polyline (simple)") {
     geo::polyline in{px2ll(0, 0, 0), px2ll(50, 1, 0), px2ll(100, 0, 0),
                      px2ll(100, 100, 0)};
 
-    auto const out = make_mask(in, 2);
+    auto const out = make_simplify_mask(in, 2);
     REQUIRE(out.size() == 21);
 
     REQUIRE(out[0].size() == 4);
@@ -69,7 +69,7 @@ TEST_CASE("simplify_mask polyline (simple)") {
   SECTION("mid level") {
     geo::polyline in{px2ll(20, 0, 10), px2ll(21, 25, 10), px2ll(20, 50, 10)};
 
-    auto const out = make_mask(in);
+    auto const out = make_simplify_mask(in);
     REQUIRE(out.size() == 21);
 
     for (auto z = 0; z <= 10; ++z) {
