@@ -146,12 +146,18 @@ struct webmercator {
     return {merc_to_pixel_x(merc.x_, z), merc_to_pixel_y(merc.y_, z)};
   }
 
-  static merc_coord_t pixel_to_merc_x(pixel_coord_t const x, uint32_t const z) {
+  constexpr static merc_coord_t pixel_to_merc_x(pixel_coord_t const x,
+                                                uint32_t const z) {
     return x * resolution(z) - kMercOriginShift;
   }
 
-  static merc_coord_t pixel_to_merc_y(pixel_coord_t const y, uint32_t const z) {
+  constexpr static merc_coord_t pixel_to_merc_y(pixel_coord_t const y,
+                                                uint32_t const z) {
     return (map_size(z) - y) * resolution(z) - kMercOriginShift;
+  }
+
+  static merc_xy pixel_to_merc(pixel_xy const& px, uint32_t const z) {
+    return {pixel_to_merc_x(px.x_, z), pixel_to_merc_y(px.y_, z)};
   }
 
   constexpr static double resolution(uint32_t const z) {
