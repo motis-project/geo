@@ -90,3 +90,43 @@ TEST_CASE("make_simplify_mask") {
     }
   }
 }
+
+TEST_CASE("apply_simplify_mask") {
+  std::vector<int> vec{0, 1, 2, 3};
+
+  {
+    auto uut = vec;
+    geo::apply_simplify_mask({true, true, true, true}, uut);
+    REQUIRE(vec == uut);
+  }
+
+  {
+    auto uut = vec;
+    std::vector<int> expected{0, 3};
+    geo::apply_simplify_mask({true, false, false, true}, uut);
+    REQUIRE(expected == uut);
+  }
+
+  {
+    auto uut = vec;
+    std::vector<int> expected{0, 2, 3};
+    geo::apply_simplify_mask({true, false, true, true}, uut);
+    REQUIRE(expected == uut);
+  }
+
+  {
+    std::vector<int> uut{0, 1, 2, 3, 4, 5, 6};
+    std::vector<int> expected{0, 5, 6};
+    geo::apply_simplify_mask({true, false, false, false, false, true, true},
+                             uut);
+    REQUIRE(expected == uut);
+  }
+
+  {
+    std::vector<int> uut{0, 1, 2, 3, 4, 5, 6};
+    std::vector<int> expected{0, 2, 3, 6};
+    geo::apply_simplify_mask({true, false, true, true, false, false, true},
+                             uut);
+    REQUIRE(expected == uut);
+  }
+}
