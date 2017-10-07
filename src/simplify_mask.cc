@@ -1,6 +1,6 @@
 #include "geo/simplify_mask.h"
 
-#include <iostream>
+#include <sstream>
 #include <stack>
 
 #include "geo/constants.h"
@@ -8,7 +8,6 @@
 
 namespace geo {
 
-constexpr auto kMaxSimplifyZoomLevel = 20;
 using proj = webmercator<4096, kMaxSimplifyZoomLevel>;
 
 uint64_t sq_perpendicular_dist(pixel_xy const& source, pixel_xy const& target,
@@ -137,6 +136,44 @@ simplify_mask_t make_simplify_mask(polyline const& input,
   assert(result.size() == kMaxSimplifyZoomLevel + 1);
 
   return result;
+}
+
+std::string serialize_simplify_mask(simplify_mask_t const& mask) {
+  uint32_t lvls = 0;
+  uint32_t size = mask[0].size();
+
+  std::stringstream ss;
+  ss.write(reinterpret_cast<char*>(&lvls), sizeof lvls);
+  ss.write(reinterpret_cast<char*>(&size), sizeof size);
+
+  char buf = 0;
+  auto buf_pos = 0;
+
+  for(auto i = 0u; i < mask.size(); ++i) {
+    if(i+1 < mask.size() && mask[i] == mask[i+1]){
+      continue;
+    }
+
+    lvls |= 1 << i;
+
+    for(auto bit : mask[i]) {
+      buf |= bit << buf_pos;
+
+      if(++buf_pos == 8) {
+        ss.put(buf);
+        buf = 0;
+        buf_pos = 0;
+      }
+    }
+  }
+
+  if(buf_pos != 0) {
+    ss.put(buf);
+  }
+
+  auto str = ss.str();
+  *reinterpret_cast<uint32_t*>(const_cast<char*>(str.data())) = lvls;  // NOLINT
+  return str;
 }
 
 }  // namespace geo

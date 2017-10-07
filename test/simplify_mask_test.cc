@@ -130,3 +130,86 @@ TEST_CASE("apply_simplify_mask") {
     REQUIRE(expected == uut);
   }
 }
+
+TEST_CASE("simplify_mask_serialize") {
+  auto const get_lvls = [](auto const& str) -> uint32_t {
+    return *reinterpret_cast<uint32_t const*>(str.data());
+  };
+  auto const get_size = [](auto const& str) -> uint32_t {
+    return *reinterpret_cast<uint32_t const*>(str.data() + sizeof(uint32_t));
+  };
+  auto const get_data = [](auto const& str, int i = 0) -> char {
+    return *(str.data() + 2 * sizeof(uint32_t) + i);
+  };
+
+  SECTION("simple") {
+    std::vector<std::vector<bool>> sut{{true, true}};
+
+    auto str = geo::serialize_simplify_mask(sut);
+
+    REQUIRE(str.size() == 2 * sizeof(uint32_t) + sizeof(char));
+
+    REQUIRE(get_lvls(str) == 0x1);
+    REQUIRE(get_size(str) == 0x2);
+    REQUIRE(get_data(str) == 0x3);
+  }
+
+  SECTION("skip") {
+    std::vector<std::vector<bool>> sut{{true, true}, {true, true}};
+
+    auto str = geo::serialize_simplify_mask(sut);
+
+    REQUIRE(str.size() == 2 * sizeof(uint32_t) + sizeof(char));
+
+    REQUIRE(get_lvls(str) == 0x2);
+    REQUIRE(get_size(str) == 0x2);
+    REQUIRE(get_data(str) == 0x3);
+  }
+
+  SECTION("multibyte") {
+    std::vector<std::vector<bool>> sut{
+        {true, true, true, true, true, true, true, true, false, true}};
+
+    auto str = geo::serialize_simplify_mask(sut);
+
+    REQUIRE(str.size() == 2 * sizeof(uint32_t) + 2 * sizeof(char));
+
+    REQUIRE(get_lvls(str) == 0x1);
+    REQUIRE(get_size(str) == 10);
+
+    // catch problem!?
+    REQUIRE(static_cast<char>(get_data(str, 0)) == static_cast<char>(0xFF));
+    REQUIRE(static_cast<char>(get_data(str, 1)) == static_cast<char>(0x2));
+  }
+}
+
+TEST_CASE("simplify_mask_serial_apply") {
+  SECTION("simple") {
+    std::vector<std::vector<bool>> mask{{true, false, true}};
+    auto mask_str = geo::serialize_simplify_mask(mask);
+
+    std::vector<int> sut{1, 2, 3};
+    geo::apply_simplify_mask(mask_str, 0, sut);
+
+    REQUIRE(sut == (std::vector<int>{1, 3}));
+  }
+
+  SECTION("complex") {
+    std::vector<std::vector<bool>> mask{
+        {true, false, false, false, false, false, true, false, false, true},
+        {true, false, true, true, false, false, true, false, false, true},
+        {true, false, true, true, false, false, true, false, false, true}};
+
+    auto mask_str = geo::serialize_simplify_mask(mask);
+
+    REQUIRE(mask_str.size() == 2 * sizeof(uint32_t) + 3 * sizeof(char));
+
+    std::vector<int> sut0{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    geo::apply_simplify_mask(mask_str, 0, sut0);
+    REQUIRE(sut0 == (std::vector<int>{0, 6, 9}));
+
+    std::vector<int> sut1{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    geo::apply_simplify_mask(mask_str, 1, sut1);
+    REQUIRE(sut1 == (std::vector<int>{0, 2, 3, 6, 9}));
+  }
+}
