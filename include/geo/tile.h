@@ -121,6 +121,17 @@ struct tile_range {
   iterator end_;
 };
 
+inline tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
+                                  uint32_t const x_2, uint32_t const y_2,
+                                  uint32_t const z) {
+  tile_iterator_bounds bounds{std::min(x_1, x_2), std::min(y_1, y_2),
+                              std::max(x_1, x_2) + 1, std::max(y_1, y_2) + 1};
+
+  return tile_range{
+      tile_iterator{std::min(x_1, x_2), std::min(y_1, y_2), z, bounds},
+      ++tile_iterator{std::max(x_1, x_2), std::max(y_1, y_2), z, bounds}};
+}
+
 template <typename Proj = default_webmercator>
 tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {
   auto const merc_1 = latlng_to_merc(p_1);
@@ -130,12 +141,7 @@ tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {
   uint32_t const y_1 = Proj::merc_to_pixel_y(merc_1.y_, z) / Proj::kTileSize;
   uint32_t const y_2 = Proj::merc_to_pixel_y(merc_2.y_, z) / Proj::kTileSize;
 
-  tile_iterator_bounds bounds{std::min(x_1, x_2), std::min(y_1, y_2),
-                              std::max(x_1, x_2) + 1, std::max(y_1, y_2) + 1};
-
-  return tile_range{
-      tile_iterator{std::min(x_1, x_2), std::min(y_1, y_2), z, bounds},
-      ++tile_iterator{std::max(x_1, x_2), std::max(y_1, y_2), z, bounds}};
+  return make_tile_range(x_1, y_1, x_2, y_2, z);
 }
 
 template <typename Proj = default_webmercator>
