@@ -69,6 +69,17 @@ struct point_rtree::impl {
                  latlng{center.lat_ + d_lat, center.lng_ + d_lng});
   }
 
+  std::vector<size_t> within(geo::box const& box) const {
+    std::vector<size_t> results;
+    rtree_.query(bgi::intersects(box_t{{box.min_.lat_, box.min_.lng_},
+                                       {box.max_.lat_, box.max_.lng_}}),
+                 boost::make_function_output_iterator(
+                     [&](auto&& v) { results.emplace_back(v.second); }));
+
+    std::sort(begin(results), end(results));
+    return results;
+  }
+
   rtree_t rtree_;
 };
 
@@ -100,6 +111,10 @@ std::vector<size_t> point_rtree::in_radius(latlng const& center,
 std::vector<size_t> point_rtree::in_radius(latlng const& center,
                                            double const max_radius) const {
   return impl_->in_radius(center, max_radius);
+}
+
+std::vector<size_t> point_rtree::within(geo::box const& box_) const {
+  return impl_->within(box_);
 }
 
 }  // namespace geo

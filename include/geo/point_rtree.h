@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "geo/box.h"
 #include "geo/latlng.h"
 
 namespace geo {
@@ -29,6 +30,8 @@ struct point_rtree {
 
   std::vector<size_t> in_radius(latlng const& center,
                                 double const max_radius) const;
+
+  std::vector<size_t> within(geo::box const&) const;
 
 private:
   struct impl;
