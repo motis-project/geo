@@ -16,7 +16,7 @@ struct latlng {
     return std::tie(lhs.lat_, lhs.lng_) == std::tie(rhs.lat_, rhs.lng_);
   }
 
-  double lat_, lng_;
+  double lat_{0.0}, lng_{0.0};
 };
 
 double distance(latlng const&, latlng const&);

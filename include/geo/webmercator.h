@@ -74,6 +74,16 @@ struct bounds {
   bounds(T const minx, T const miny, T const maxx, T const maxy)
       : minx_(minx), miny_(miny), maxx_(maxx), maxy_(maxy) {}
 
+  friend bool operator==(bounds<T> const& lhs, bounds<T> const& rhs) {
+    return std::tie(lhs.minx_, lhs.miny_, lhs.maxx_, lhs.maxy_) ==
+           std::tie(rhs.minx_, rhs.miny_, rhs.maxx_, rhs.maxy_);
+  }
+
+  friend std::ostream& operator<<(std::ostream& out, bounds<T> const& b) {
+    return out << "(" << b.minx_ << ", " << b.miny_ << ", " << b.maxx_ << ", "
+               << b.maxy_ << ")";
+  }
+
   T minx_, miny_, maxx_, maxy_;
 };
 

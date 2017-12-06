@@ -5,6 +5,7 @@
 namespace geo {
 
 struct tile_range;
+using tile_iterator_bounds = bounds<uint32_t>;
 
 struct tile {
   tile() = default;
@@ -21,11 +22,16 @@ struct tile {
   }
 
   tile_range direct_children() const;
+  tile_range range_on_z(uint32_t const z) const;
+  tile_iterator_bounds bounds_on_z(uint32_t const z) const;
+
+  friend std::ostream& operator<<(std::ostream& o, tile const& t) {
+    return o << "(" << t.x_ << "," << t.y_ << "," << t.z_ << ")";
+  }
 
   uint32_t x_, y_, z_;
 };
 
-using tile_iterator_bounds = bounds<uint32_t>;
 inline tile_iterator_bounds make_no_bounds(uint32_t z) {
   return tile_iterator_bounds{0, 0, 1u << z, 1u << z};
 }
@@ -115,6 +121,17 @@ struct tile_range {
   iterator end_;
 };
 
+inline tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
+                                  uint32_t const x_2, uint32_t const y_2,
+                                  uint32_t const z) {
+  tile_iterator_bounds bounds{std::min(x_1, x_2), std::min(y_1, y_2),
+                              std::max(x_1, x_2) + 1, std::max(y_1, y_2) + 1};
+
+  return tile_range{
+      tile_iterator{std::min(x_1, x_2), std::min(y_1, y_2), z, bounds},
+      ++tile_iterator{std::max(x_1, x_2), std::max(y_1, y_2), z, bounds}};
+}
+
 template <typename Proj = default_webmercator>
 tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {
   auto const merc_1 = latlng_to_merc(p_1);
@@ -124,12 +141,7 @@ tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {
   uint32_t const y_1 = Proj::merc_to_pixel_y(merc_1.y_, z) / Proj::kTileSize;
   uint32_t const y_2 = Proj::merc_to_pixel_y(merc_2.y_, z) / Proj::kTileSize;
 
-  tile_iterator_bounds bounds{std::min(x_1, x_2), std::min(y_1, y_2),
-                              std::max(x_1, x_2) + 1, std::max(y_1, y_2) + 1};
-
-  return tile_range{
-      tile_iterator{std::min(x_1, x_2), std::min(y_1, y_2), z, bounds},
-      ++tile_iterator{std::max(x_1, x_2), std::max(y_1, y_2), z, bounds}};
+  return make_tile_range(x_1, y_1, x_2, y_2, z);
 }
 
 template <typename Proj = default_webmercator>
