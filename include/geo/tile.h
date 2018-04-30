@@ -40,10 +40,7 @@ struct tile_iterator {
   tile_iterator() : tile_iterator(0) {}
 
   explicit tile_iterator(uint32_t const z)
-      : tile_iterator(z, make_no_bounds(z)) {}
-
-  tile_iterator(uint32_t const z, tile_iterator_bounds bounds)
-      : tile_iterator(0, 0, z, bounds) {}
+      : tile_iterator(0, 0, z, make_no_bounds(z)) {}
 
   tile_iterator(uint32_t const x, uint32_t const y, uint32_t const z)
       : tile_iterator(x, y, z, make_no_bounds(z)) {}
@@ -67,8 +64,34 @@ struct tile_iterator {
         bounds_.miny_ = bounds_.miny_ << 1;
         bounds_.maxy_ = bounds_.maxy_ << 1;
 
+        tile_.x_ = bounds_.minx_;
         tile_.y_ = bounds_.miny_;
         ++tile_.z_;
+      }
+    }
+
+    return *this;
+  }
+
+  tile_iterator& operator--() {
+    if (tile_.x_ != bounds_.minx_) {
+      --tile_.x_;
+    } else {
+      tile_.x_ = bounds_.maxx_ - 1;
+
+      if (tile_.y_ != bounds_.miny_) {
+        --tile_.y_;
+      } else {
+        bounds_.minx_ = bounds_.minx_ >> 1;
+        bounds_.maxx_ = bounds_.maxx_ >> 1;
+        bounds_.miny_ = bounds_.miny_ >> 1;
+        bounds_.maxy_ = bounds_.maxy_ >> 1;
+
+        tile_.x_ = bounds_.maxx_ - 1;
+        tile_.y_ = bounds_.maxy_ - 1;
+
+        assert(tile_.z_ > 0);
+        --tile_.z_;
       }
     }
 

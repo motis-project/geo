@@ -115,3 +115,40 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 }
+
+TEST_CASE("tile_iterator") {
+  SECTION("increment") {
+    geo::tile_iterator it{0, 0, 1};
+    ++it;
+    CHECK(*it == geo::tile(1, 0, 1));
+    ++it;
+    CHECK(*it == geo::tile(0, 1, 1));
+    ++it;
+    CHECK(*it == geo::tile(1, 1, 1));
+    ++it;
+    CHECK(*it == geo::tile(0, 0, 2));
+  }
+
+  SECTION("decrement") {
+    geo::tile_iterator it{0, 0, 2};
+    --it;
+    CHECK(*it == geo::tile(1, 1, 1));
+    --it;
+    CHECK(*it == geo::tile(0, 1, 1));
+    --it;
+    CHECK(*it == geo::tile(1, 0, 1));
+    --it;
+    CHECK(*it == geo::tile(0, 0, 1));
+    --it;
+    CHECK(*it == geo::tile(0, 0, 0));
+  }
+
+  SECTION("bounds") {
+    geo::tile_iterator it{2, 4, 2, {2, 4, 3, 5}};
+    CHECK(*it == geo::tile(2, 4, 2));
+    ++it;
+    CHECK(*it == geo::tile(4, 8, 3));
+    --it;
+    CHECK(*it == geo::tile(2, 4, 2));
+  }
+}
