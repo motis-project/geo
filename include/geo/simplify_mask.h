@@ -62,7 +62,7 @@ void apply_simplify_mask(std::string const& mask, int req_lvl,
       ++skipped_levels;
     }
   }
-  assert(lvls > (1u << skipped_levels));
+  assert(lvls >= (1u << skipped_levels));
 
   auto base_ptr = mask.data() + 2 * sizeof(uint32_t);
   auto offset = skipped_levels * size;
