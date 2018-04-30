@@ -21,6 +21,7 @@ struct tile {
     return std::tie(z_, x_, y_) == std::tie(o.z_, o.x_, o.y_);
   }
 
+  tile_range as_tile_range() const;
   tile_range direct_children() const;
   tile_range range_on_z(uint32_t const z) const;
   tile_iterator_bounds bounds_on_z(uint32_t const z) const;
@@ -123,6 +124,8 @@ struct tile_iterator {
            std::tie(o.tile_.z_, o.tile_.x_, o.tile_.y_);
   }
 
+  friend tile_range tile_range_on_z(tile_range const&, uint32_t const);
+
 private:
   tile tile_;
   tile_iterator_bounds bounds_;
@@ -144,16 +147,13 @@ struct tile_range {
   iterator end_;
 };
 
-inline tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
-                                  uint32_t const x_2, uint32_t const y_2,
-                                  uint32_t const z) {
-  tile_iterator_bounds bounds{std::min(x_1, x_2), std::min(y_1, y_2),
-                              std::max(x_1, x_2) + 1, std::max(y_1, y_2) + 1};
+// input tile coordinates are inclusive!
+tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
+                           uint32_t const x_2, uint32_t const y_2,
+                           uint32_t const z);
 
-  return tile_range{
-      tile_iterator{std::min(x_1, x_2), std::min(y_1, y_2), z, bounds},
-      ++tile_iterator{std::max(x_1, x_2), std::max(y_1, y_2), z, bounds}};
-}
+// input range must not span zoom levels
+tile_range tile_range_on_z(tile_range const&, uint32_t const z);
 
 template <typename Proj = default_webmercator>
 tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {

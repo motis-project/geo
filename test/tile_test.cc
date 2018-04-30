@@ -152,3 +152,36 @@ TEST_CASE("tile_iterator") {
     CHECK(*it == geo::tile(2, 4, 2));
   }
 }
+
+TEST_CASE("tile_range") {
+  SECTION("make_tile_range") {
+    auto const sut = geo::make_tile_range(2, 3, 3, 4, 6);
+
+    std::vector<geo::tile> expected;
+    expected.emplace_back(2, 3, 6);
+    expected.emplace_back(3, 3, 6);
+    expected.emplace_back(2, 4, 6);
+    expected.emplace_back(3, 4, 6);
+
+    auto const actual = list_tiles(sut);
+    CHECK(expected == actual);
+  }
+
+  SECTION("tile_range_on_z") {
+    geo::tile parent{8585, 5565, 14};
+    for (auto i = 0; i < 21; ++i) {
+      auto const e = list_tiles(parent.range_on_z(i));
+
+      // via some downward level must keep the same
+      // (via upward level would loose granularity)
+      for (auto j = i; j < 21; ++j) {
+        auto const r = tile_range_on_z(parent.as_tile_range(), j);
+        auto const a = list_tiles(tile_range_on_z(r, i));
+        CAPTURE(i)
+        CAPTURE(j)
+        CHECK(!a.empty());
+        CHECK(e == a);
+      }
+    }
+  }
+}
