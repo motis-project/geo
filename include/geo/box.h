@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <limits>
+#include <algorithm>
 
 #include "geo/constants.h"
 #include "geo/latlng.h"
