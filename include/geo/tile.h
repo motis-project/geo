@@ -21,6 +21,8 @@ struct tile {
     return std::tie(z_, x_, y_) == std::tie(o.z_, o.x_, o.y_);
   }
 
+  tile parent() const { return {x_ >> 1, y_ >> 1, z_ - 1}; }
+
   tile_range as_tile_range() const;
   tile_range direct_children() const;
   tile_range range_on_z(uint32_t const z) const;
