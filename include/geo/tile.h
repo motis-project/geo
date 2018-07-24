@@ -23,6 +23,9 @@ struct tile {
 
   tile parent() const { return {x_ >> 1, y_ >> 1, z_ - 1}; }
 
+  // numbering of the (four) tiles sharing a parent
+  inline uint32_t quad_pos() const { return (y_ % 2 << 1) | (x_ % 2); }
+
   tile_range as_tile_range() const;
   tile_range direct_children() const;
   tile_range range_on_z(uint32_t const z) const;
