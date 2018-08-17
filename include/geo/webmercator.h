@@ -54,6 +54,11 @@ struct xy {
   explicit xy(T const i) : xy(i, i) {}
   xy(T const x, T const y) : x_(x), y_(y) {}
 
+  T const& x() const { return x_; }
+  T const& y() const { return y_; }
+  T& x() { return x_; }
+  T& y() { return y_; }
+
   friend bool operator==(xy const& lhs, xy const& rhs) {
     return std::tie(lhs.x_, lhs.y_) == std::tie(rhs.x_, rhs.y_);
   }

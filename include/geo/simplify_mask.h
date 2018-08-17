@@ -1,11 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <sstream>
+#include <stack>
 #include <string>
 #include <vector>
 
+#include "geo/constants.h"
 #include "geo/latlng.h"
 #include "geo/polyline.h"
+#include "geo/webmercator.h"
 
 namespace geo {
 
@@ -13,42 +17,212 @@ constexpr auto kMaxSimplifyZoomLevel = 20;
 constexpr auto kSimplifyZoomLevels = kMaxSimplifyZoomLevel + 1;
 using simplify_mask_t = std::vector<std::vector<bool>>;
 
-simplify_mask_t make_simplify_mask(polyline const&,
-                                   uint32_t const pixel_precision = 1);
+namespace detail {
 
-template <typename T>
-void apply_simplify_mask(std::vector<bool> const& mask, std::vector<T>& vec) {
-  assert(mask.size() == vec.size());
+template <typename Coord>
+uint64_t sq_perpendicular_dist(Coord const& source, Coord const& target,
+                               Coord const& test) {
+  Coord const slope_vec{target.y() - source.y(), target.x() - source.x()};
+  Coord const rel_coord{test.y() - source.y(), test.x() - source.x()};
+
+  // dot product of two un-normalized vectors
+  double const unnormed_ratio =
+      slope_vec.x() * rel_coord.x() + slope_vec.y() * rel_coord.y();
+  double const sq_length =
+      slope_vec.x() * slope_vec.x() + slope_vec.y() * slope_vec.y();
+
+  double proj_x, proj_y;
+
+  if (sq_length < std::numeric_limits<double>::epsilon()) {
+    proj_x = source.x();
+    proj_y = source.y();
+  } else {
+    double const normed_ratio = unnormed_ratio / sq_length;
+    double const clamped_ratio = std::max(std::min(normed_ratio, 1.), 0.);
+
+    proj_x = (1. - clamped_ratio) * source.x() + target.x() * clamped_ratio;
+    proj_y = (1. - clamped_ratio) * source.y() + target.y() * clamped_ratio;
+  }
+
+  auto const dx = proj_x - test.x();
+  auto const dy = proj_y - test.y();
+  return dx * dx + dy * dy;
+}
+
+using range_t = std::pair<size_t, size_t>;
+using stack_t = std::stack<range_t, std::vector<range_t>>;
+
+template <typename Polyline>
+bool process_level(Polyline const& line, uint64_t const threshold,
+                   stack_t& stack, std::vector<bool>& mask) {
+  assert(stack.empty());
+
+  auto last = 0;
+  for (auto i = 1u; i < mask.size(); ++i) {
+    if (mask[i]) {
+      if (i - last > 1) {
+        stack.emplace(last, i);
+      }
+
+      last = i;
+    }
+  }
+
+  if (stack.empty()) {
+    return true;
+  }
+
+  while (!stack.empty()) {
+    auto const pair = stack.top();
+    stack.pop();
+
+    uint64_t max_dist = 0;
+    auto farthest_entry_index = pair.second;
+
+    for (auto idx = pair.first + 1; idx != pair.second; ++idx) {
+      auto const dist =
+          sq_perpendicular_dist(line[pair.first], line[pair.second], line[idx]);
+
+      if (dist > max_dist && dist >= threshold) {
+        farthest_entry_index = idx;
+        max_dist = dist;
+      }
+    }
+
+    if (max_dist >= threshold) {
+      mask[farthest_entry_index] = true;
+      if (pair.first < farthest_entry_index) {
+        stack.emplace(pair.first, farthest_entry_index);
+      }
+      if (farthest_entry_index < pair.second) {
+        stack.emplace(farthest_entry_index, pair.second);
+      }
+    }
+  }
+
+  return false;
+}
+
+}  // namespace detail
+
+template <typename Polyline>
+simplify_mask_t make_simplify_mask(Polyline const& line,
+                                   uint32_t const pixel_precision = 1) {
+  simplify_mask_t result;
+
+  std::vector<bool> mask(line.size(), false);
+  mask.front() = true;
+  mask.back() = true;
+
+  std::vector<detail::range_t> stack_mem;
+  stack_mem.reserve(line.size());
+  detail::stack_t stack{stack_mem};
+
+  for (auto z = 0; z <= kMaxSimplifyZoomLevel; ++z) {
+    uint64_t const delta = static_cast<uint64_t>(pixel_precision)
+                           << (kMaxSimplifyZoomLevel - z);
+    uint64_t const threshold = delta * delta;
+
+    auto const done = detail::process_level(line, threshold, stack, mask);
+
+    if (done) {
+      for (auto i = z; i <= kMaxSimplifyZoomLevel; ++i) {
+        result.push_back(mask);
+      }
+      break;
+    }
+
+    result.push_back(mask);
+  }
+
+  assert(result.size() == kMaxSimplifyZoomLevel + 1);
+  return result;
+}
+
+template <>
+simplify_mask_t make_simplify_mask<geo::polyline>(
+    geo::polyline const& input, uint32_t const pixel_precision) {
+  using proj = webmercator<4096, kMaxSimplifyZoomLevel>;
+
+  std::vector<pixel_xy> line;
+  line.reserve(input.size());
+  std::transform(
+      begin(input), end(input), std::back_inserter(line), [](auto const& in) {
+        return proj::merc_to_pixel(latlng_to_merc(in), kMaxSimplifyZoomLevel);
+      });
+  return make_simplify_mask(line, pixel_precision);
+}
+
+template <typename Polyline>
+void apply_simplify_mask(std::vector<bool> const& mask, Polyline& line) {
+  assert(mask.size() == line.size());
   if (mask.empty()) {
     return;
   }
   assert(mask.at(0) == true);
 
-  auto first = std::next(begin(vec));
+  auto first = std::next(begin(line));
   size_t pos = 1;
-  for (auto it = first; it != end(vec); ++pos, ++it) {
+  for (auto it = first; it != end(line); ++pos, ++it) {
     if (mask[pos]) {
       *first++ = std::move(*it);
     }
   }
 
-  vec.erase(first, end(vec));
+  line.erase(first, end(line));
 }
 
-std::string serialize_simplify_mask(simplify_mask_t const&);
+std::string serialize_simplify_mask(simplify_mask_t const& mask) {
+  uint32_t lvls = 0;
+  uint32_t size = mask[0].size();
 
-template <typename T>
-void apply_simplify_mask(std::string const& mask, int req_lvl,
-                         std::vector<T>& vec) {
+  std::stringstream ss;
+  ss.write(reinterpret_cast<char*>(&lvls), sizeof lvls);
+  ss.write(reinterpret_cast<char*>(&size), sizeof size);
+
+  char buf = 0;
+  auto buf_pos = 0;
+
+  for (auto i = 0u; i < mask.size(); ++i) {
+    if (i + 1 < mask.size() && mask[i] == mask[i + 1]) {
+      continue;
+    }
+
+    lvls |= 1 << i;
+
+    for (auto bit : mask[i]) {
+      buf |= bit << buf_pos;
+
+      if (++buf_pos == 8) {
+        ss.put(buf);
+        buf = 0;
+        buf_pos = 0;
+      }
+    }
+  }
+
+  if (buf_pos != 0) {
+    ss.put(buf);
+  }
+
+  auto str = ss.str();
+  std::memcpy(const_cast<char*>(str.data()),
+              reinterpret_cast<char const*>(&lvls), sizeof lvls);
+  return str;
+}
+
+template <typename Polyline>
+void apply_simplify_mask(std::string const& mask, int req_lvl, Polyline& line) {
   assert(req_lvl >= 0 && req_lvl <= kMaxSimplifyZoomLevel);
 
-  uint32_t lvls = *reinterpret_cast<uint32_t const*>(mask.data());
+  uint32_t lvls;
+  std::memcpy(&lvls, mask.data(), sizeof(uint32_t));
   assert(lvls != 0);
 
-  uint32_t size =
-      *reinterpret_cast<uint32_t const*>(mask.data() + sizeof(uint32_t));
+  uint32_t size;
+  std::memcpy(&size, mask.data() + sizeof(uint32_t), sizeof(uint32_t));
 
-  assert(size == vec.size());
+  assert(size == line.size());
   if (size == 0) {
     return;
   }
@@ -74,15 +248,15 @@ void apply_simplify_mask(std::string const& mask, int req_lvl,
 
   assert(get_bit(0) == true);
 
-  auto first = std::next(begin(vec));
+  auto first = std::next(begin(line));
   size_t pos = 1;
-  for (auto it = first; it != end(vec); ++pos, ++it) {
+  for (auto it = first; it != end(line); ++pos, ++it) {
     if (get_bit(pos)) {
       *first++ = std::move(*it);
     }
   }
 
-  vec.erase(first, end(vec));
+  line.erase(first, end(line));
 }
 
 }  // namespace geo
