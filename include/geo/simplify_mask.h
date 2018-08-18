@@ -140,7 +140,7 @@ simplify_mask_t make_simplify_mask(Polyline const& line,
 }
 
 template <>
-simplify_mask_t make_simplify_mask<geo::polyline>(
+inline simplify_mask_t make_simplify_mask<geo::polyline>(
     geo::polyline const& input, uint32_t const pixel_precision) {
   using proj = webmercator<4096, kMaxSimplifyZoomLevel>;
 
@@ -172,7 +172,7 @@ void apply_simplify_mask(std::vector<bool> const& mask, Polyline& line) {
   line.erase(first, end(line));
 }
 
-std::string serialize_simplify_mask(simplify_mask_t const& mask) {
+inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
   uint32_t lvls = 0;
   uint32_t size = mask[0].size();
 
@@ -211,47 +211,51 @@ std::string serialize_simplify_mask(simplify_mask_t const& mask) {
   return str;
 }
 
+struct simplify_mask_reader {
+  explicit simplify_mask_reader(char const* data, uint32_t req_lvl) {
+    assert(req_lvl >= 0 && req_lvl <= kMaxSimplifyZoomLevel);
+
+    uint32_t lvls;
+    std::memcpy(&lvls, data, sizeof(uint32_t));
+    assert(lvls != 0);
+
+    std::memcpy(&size_, data + sizeof(uint32_t), sizeof(uint32_t));
+
+    uint32_t skipped_levels = 0u;
+    for (auto i = 0; i < 32; ++i) {
+      if (i >= req_lvl) {
+        break;
+      }
+      if ((lvls & (1u << i)) != 0) {
+        ++skipped_levels;
+      }
+    }
+    assert(lvls >= (1u << skipped_levels));
+
+    base_ptr_ = data + 2 * sizeof(uint32_t);
+    offset_ = skipped_levels * size_;
+
+    assert(get_bit(0) == true);
+  }
+
+  bool get_bit(size_t const pos) const {
+    auto byte = *(base_ptr_ + (offset_ + pos) / 8);
+    return (byte >> (offset_ + pos) % 8) & 0x1;
+  }
+
+  uint32_t size_;
+  char const* base_ptr_;
+  uint32_t offset_;
+};
+
 template <typename Polyline>
 void apply_simplify_mask(std::string const& mask, int req_lvl, Polyline& line) {
-  assert(req_lvl >= 0 && req_lvl <= kMaxSimplifyZoomLevel);
-
-  uint32_t lvls;
-  std::memcpy(&lvls, mask.data(), sizeof(uint32_t));
-  assert(lvls != 0);
-
-  uint32_t size;
-  std::memcpy(&size, mask.data() + sizeof(uint32_t), sizeof(uint32_t));
-
-  assert(size == line.size());
-  if (size == 0) {
-    return;
-  }
-
-  auto skipped_levels = 0;
-  for (auto i = 0; i < 32; ++i) {
-    if (i >= req_lvl) {
-      break;
-    }
-    if ((lvls & (1u << i)) != 0) {
-      ++skipped_levels;
-    }
-  }
-  assert(lvls >= (1u << skipped_levels));
-
-  auto base_ptr = mask.data() + 2 * sizeof(uint32_t);
-  auto offset = skipped_levels * size;
-
-  auto get_bit = [&base_ptr, &offset](size_t const pos) -> bool {
-    auto byte = *(base_ptr + (offset + pos) / 8);
-    return (byte >> (offset + pos) % 8) & 0x1;
-  };
-
-  assert(get_bit(0) == true);
+  simplify_mask_reader reader{mask.data(), static_cast<uint32_t>(req_lvl)};
 
   auto first = std::next(begin(line));
   size_t pos = 1;
   for (auto it = first; it != end(line); ++pos, ++it) {
-    if (get_bit(pos)) {
+    if (reader.get_bit(pos)) {
       *first++ = std::move(*it);
     }
   }
