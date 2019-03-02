@@ -21,6 +21,10 @@ struct box {
 
   explicit box(polyline const& line) : box{} { extend(line); }
 
+  box(latlng const& center, double const dist_in_m) : box{center, center} {
+    extend(dist_in_m);
+  }
+
   void extend(polyline const& line) {
     for (auto const& pos : line) {
       extend(pos);

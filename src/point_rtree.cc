@@ -5,6 +5,7 @@
 #include "boost/geometry/geometries/point.hpp"
 #include "boost/geometry/index/rtree.hpp"
 
+#include "geo/detail/register_box.h"
 #include "geo/detail/register_latlng.h"
 
 namespace bgi = boost::geometry::index;
@@ -12,7 +13,6 @@ namespace bgi = boost::geometry::index;
 namespace geo {
 
 struct point_rtree::impl {
-  using box_t = boost::geometry::model::box<latlng>;
   using rtree_t = bgi::rtree<value_t, bgi::quadratic<16>>;
 
   impl() = default;
@@ -22,7 +22,7 @@ struct point_rtree::impl {
       latlng const& center, double const min_radius,
       double const max_radius) const {
     std::vector<std::pair<double, size_t>> results;
-    rtree_.query(bgi::intersects(generate_box(center, max_radius)),
+    rtree_.query(bgi::intersects(box{center, max_radius}),
                  boost::make_function_output_iterator([&](auto&& v) {
                    auto const dist = distance(v.first, center);
                    if (dist >= max_radius || dist < min_radius) {
@@ -55,24 +55,9 @@ struct point_rtree::impl {
     return in_radius(center, 0, max_radius);
   }
 
-  /// Generates a query box around the given origin with edge length 2xdist
-  static inline box_t generate_box(latlng const& center, double dist_in_m) {
-    // The distance of latitude degrees in km is always the same (~111000.0f)
-    double const d_lat = dist_in_m / 111000.0f;
-
-    // The distance of longitude degrees depends on the latitude.
-    double const origin_lat_rad = center.lat_ * (M_PI / 180.0f);
-    double const m_per_deg = 111200.0f * std::cos(origin_lat_rad);
-    double const d_lng = std::abs(dist_in_m / m_per_deg);
-
-    return box_t(latlng{center.lat_ - d_lat, center.lng_ - d_lng},
-                 latlng{center.lat_ + d_lat, center.lng_ + d_lng});
-  }
-
   std::vector<size_t> within(geo::box const& box) const {
     std::vector<size_t> results;
-    rtree_.query(bgi::intersects(box_t{{box.min_.lat_, box.min_.lng_},
-                                       {box.max_.lat_, box.max_.lng_}}),
+    rtree_.query(bgi::intersects(box),
                  boost::make_function_output_iterator(
                      [&](auto&& v) { results.emplace_back(v.second); }));
 
