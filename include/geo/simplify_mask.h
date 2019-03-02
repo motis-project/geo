@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 #include <sstream>
 #include <stack>
 #include <string>
@@ -222,7 +223,7 @@ struct simplify_mask_reader {
     std::memcpy(&size_, data + sizeof(uint32_t), sizeof(uint32_t));
 
     uint32_t skipped_levels = 0u;
-    for (auto i = 0; i < 32; ++i) {
+    for (auto i = 0u; i < 32u; ++i) {
       if (i >= req_lvl) {
         break;
       }
