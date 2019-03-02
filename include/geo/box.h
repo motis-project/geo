@@ -59,7 +59,7 @@ struct box {
     double const max_m_per_deg = 111200.0f * std::cos(max_lat_rad);
     double const max_d_lng = std::abs(dist_in_m / max_m_per_deg);
 
-    max_.lng_ -= max_d_lng;
+    max_.lng_ += max_d_lng;
   }
 
   bool contains(latlng const& pos) const {
