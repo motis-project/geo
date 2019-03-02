@@ -18,7 +18,7 @@ double bearing(latlng const& p1, latlng const& p2) {
   auto to_rad = [](auto const& deg) { return deg * kPI / 180.0; };
   auto to_deg = [](auto const& rad) { return rad * 180.0 / kPI; };
 
-  double dlng = to_rad(p1.lng_) - to_rad(p2.lng_);
+  double dlng = to_rad(p1.lng_) - to_rad(p2.lng_); // CCW from NORTH!
   double cos_p2lat = std::cos(to_rad(p2.lat_));
 
   auto bearing =
