@@ -5,7 +5,7 @@ include_directories(include)
 
 file(GLOB_RECURSE geo-files src/*.cc)
 add_library(geo STATIC ${geo-files})
-target_include_directories(geo INTERFACE include)
+target_include_directories(geo PUBLIC include)
 if (NOT MSVC)
   set_target_properties(geo PROPERTIES COMPILE_FLAGS "-std=c++14 -Wall -Wextra")
 endif()
