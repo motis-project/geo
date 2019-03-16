@@ -20,7 +20,7 @@ double bearing(latlng const& p1, latlng const& p2) {
   auto to_rad = [](auto const& deg) { return deg * kPI / 180.0; };
   auto to_deg = [](auto const& rad) { return rad * 180.0 / kPI; };
 
-  double dlng = to_rad(p1.lng_) - to_rad(p2.lng_); // CCW from NORTH!
+  double dlng = to_rad(p1.lng_) - to_rad(p2.lng_);  // CCW from NORTH!
   double cos_p2lat = std::cos(to_rad(p2.lat_));
 
   auto bearing =
@@ -39,7 +39,8 @@ uint32_t tile_hash_32(latlng const& pos) {
   auto const merc = latlng_to_merc(pos);
   using proj = webmercator<1>;
   tile t{static_cast<uint32_t>(proj::merc_to_pixel_x(merc.x_, kZMax)),
-         static_cast<uint32_t>(proj::merc_to_pixel_y(merc.y_, kZMax)), kZMax};
+         static_cast<uint32_t>(proj::merc_to_pixel_y(merc.y_, kZMax)),
+         static_cast<uint32_t>(kZMax)};
 
   for (auto offset = 0u; offset < kHashBits; offset += 2) {
     assert(t.z_ != 0);
