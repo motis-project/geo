@@ -214,7 +214,7 @@ inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
 
 struct simplify_mask_reader {
   explicit simplify_mask_reader(char const* data, uint32_t req_lvl) {
-    assert(req_lvl >= 0 && req_lvl <= kMaxSimplifyZoomLevel);
+    assert(req_lvl <= kMaxSimplifyZoomLevel);
 
     uint32_t lvls;
     std::memcpy(&lvls, data, sizeof(uint32_t));
