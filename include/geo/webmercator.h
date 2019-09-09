@@ -132,8 +132,8 @@ struct webmercator {
 
   static merc_bounds tile_bounds_merc(uint32_t const x, uint32_t const y,
                                       uint32_t const z) {
-    auto const pixel_to_merc = [](uint32_t const p, uint32_t const z) {
-      return p * resolution(z) - kMercOriginShift;
+    auto const pixel_to_merc = [](uint32_t const p, uint32_t const px_z) {
+      return p * resolution(px_z) - kMercOriginShift;
     };
 
     auto const y_reverse = (std::pow(2, z) - 1) - y;
