@@ -1,8 +1,9 @@
 #pragma once
 
 #include <cmath>
-#include <limits>
+
 #include <algorithm>
+#include <limits>
 
 #include "geo/constants.h"
 #include "geo/latlng.h"
@@ -45,22 +46,22 @@ struct box {
   }
 
   void extend(double dist_in_m) {
-    // The distance of latitude degrees in km is always the same (~111000.0f)
-    double const d_lat = dist_in_m / 111000.0f;
+    // The distance of latitude degrees in km is always the same (~111000.0)
+    double const d_lat = dist_in_m / 111000.0;
 
     min_.lat_ -= d_lat;
     max_.lat_ += d_lat;
 
     // The distance of longitude degrees depends on the latitude.
-    double const min_lat_rad = min_.lat_ * (kPI / 180.0f);
-    double const min_m_per_deg = 111200.0f * std::cos(min_lat_rad);
+    double const min_lat_rad = min_.lat_ * (kPI / 180.0);
+    double const min_m_per_deg = 111200.0 * std::cos(min_lat_rad);
     double const min_d_lng = std::abs(dist_in_m / min_m_per_deg);
 
     min_.lng_ -= min_d_lng;
 
     // The distance of longitude degrees depends on the latitude.
-    double const max_lat_rad = max_.lat_ * (kPI / 180.0f);
-    double const max_m_per_deg = 111200.0f * std::cos(max_lat_rad);
+    double const max_lat_rad = max_.lat_ * (kPI / 180.0);
+    double const max_m_per_deg = 111200.0 * std::cos(max_lat_rad);
     double const max_d_lng = std::abs(dist_in_m / max_m_per_deg);
 
     max_.lng_ += max_d_lng;

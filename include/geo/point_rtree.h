@@ -22,6 +22,9 @@ struct point_rtree {
       latlng const& center, double const min_radius,
       double const max_radius) const;
 
+  std::vector<std::pair<double, size_t>> nearest(latlng const& center,
+                                                 unsigned const) const;
+
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
       latlng const& center, double const max_radius) const;
 

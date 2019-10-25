@@ -35,6 +35,18 @@ struct point_rtree::impl {
     return results;
   }
 
+  std::vector<std::pair<double, size_t>> nearest(latlng const& center,
+                                                 unsigned const k) const {
+    std::vector<std::pair<double, size_t>> results;
+    rtree_.query(bgi::nearest(center, k),
+                 boost::make_function_output_iterator([&](auto&& v) {
+                   auto const dist = distance(v.first, center);
+                   results.emplace_back(dist, v.second);
+                 }));
+    std::sort(begin(results), end(results));
+    return results;
+  }
+
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
       latlng const& center, double const max_radius) const {
     return in_radius_with_distance(center, 0, max_radius);
@@ -100,6 +112,11 @@ std::vector<size_t> point_rtree::in_radius(latlng const& center,
 
 std::vector<size_t> point_rtree::within(geo::box const& box_) const {
   return impl_->within(box_);
+}
+
+std::vector<std::pair<double, size_t>> point_rtree::nearest(
+    latlng const& center, unsigned const k) const {
+  return impl_->nearest(center, k);
 }
 
 }  // namespace geo
