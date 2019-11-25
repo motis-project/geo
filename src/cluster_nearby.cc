@@ -15,6 +15,8 @@ constexpr float kEarthRadius_f = 6371000.;
 
 namespace detail {
 
+constexpr auto const kPi = static_cast<float>(M_PI);
+
 struct latlng_f {
   latlng_f() = default;
   latlng_f(float lat, float lng) : lat_(lat), lng_(lng) {}
@@ -27,11 +29,11 @@ struct bounding_box_f {
 };
 
 inline float gc_distance_f(latlng_f const& a, latlng_f const& b) {
-  auto const to_rad = [](auto const deg) { return deg * M_PI / 180.; };
+  auto const to_rad = [](float const deg) { return deg * kPi / 180.0f; };
 
   auto const u = std::sin((to_rad(b.lat_) - to_rad(a.lat_)) / 2);
   auto const v = std::sin((to_rad(b.lng_) - to_rad(a.lng_)) / 2);
-  return 2.0 * kEarthRadius_f *
+  return 2.0f * kEarthRadius_f *
          std::asin(std::sqrt(u * u + std::cos(to_rad(a.lat_)) *
                                          std::cos(to_rad(b.lat_)) * v * v));
 }
@@ -39,9 +41,10 @@ inline float gc_distance_f(latlng_f const& a, latlng_f const& b) {
 inline bounding_box_f compute_bounding_box(latlng_f const& center,
                                            float const dist) {
   // http://gis.stackexchange.com/a/2980
-  float offset_lat = (dist / kEarthRadius_f) * 180. / M_PI;
+  float offset_lat = (dist / kEarthRadius_f) * 180.0f / kPi;
   float offset_lng =
-      (dist / (kEarthRadius_f * cos(center.lat_ * M_PI / 180.))) * 180. / M_PI;
+      (dist / (kEarthRadius_f * cos(center.lat_ * kPi / 180.0f))) * 180.0f /
+      kPi;
 
   // clang-format off
   return {center.lat_ + offset_lat,
@@ -176,7 +179,8 @@ std::vector<cluster_id_t> cluster_nearby(std::vector<latlng> const& coords_d,
   std::vector<detail::latlng_f> coords;
   coords.reserve(coords_d.size());
   for (auto const& ll : coords_d) {
-    coords.emplace_back(ll.lat_, ll.lng_);
+    coords.emplace_back(static_cast<float>(ll.lat_),
+                        static_cast<float>(ll.lng_));
   }
 
   // make single linkage clusters
@@ -197,7 +201,7 @@ std::vector<cluster_id_t> cluster_nearby(std::vector<latlng> const& coords_d,
   auto const make_clusters = [&](auto const lb, auto const ub) {
     if (std::distance(lb, ub) < 3) {
       for (auto it = lb; it != ub; ++it) {
-        clusters[it->second] = lb->second;
+        clusters[it->second] = static_cast<cluster_id_t>(lb->second);
       }
       return;  // triangle inequality impossible because no triangle ;)
     }

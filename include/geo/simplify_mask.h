@@ -174,8 +174,8 @@ void apply_simplify_mask(std::vector<bool> const& mask, Polyline& line) {
 }
 
 inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
-  uint32_t lvls = 0;
-  uint32_t size = mask[0].size();
+  auto lvls = uint32_t{0};
+  auto size = static_cast<uint32_t>(mask[0].size());
 
   std::stringstream ss;
   ss.write(reinterpret_cast<char*>(&lvls), sizeof lvls);
