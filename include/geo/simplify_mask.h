@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+
 #include <sstream>
 #include <stack>
 #include <string>
@@ -27,16 +28,15 @@ uint64_t sq_perpendicular_dist(Coord const& source, Coord const& target,
   Coord const rel_coord{test.y() - source.y(), test.x() - source.x()};
 
   // dot product of two un-normalized vectors
-  double const unnormed_ratio =
-      slope_vec.x() * rel_coord.x() + slope_vec.y() * rel_coord.y();
-  double const sq_length =
-      slope_vec.x() * slope_vec.x() + slope_vec.y() * slope_vec.y();
+  auto const unnormed_ratio = static_cast<double>(
+      slope_vec.x() * rel_coord.x() + slope_vec.y() * rel_coord.y());
+  auto const sq_length = static_cast<double>(slope_vec.x() * slope_vec.x() +
+                                             slope_vec.y() * slope_vec.y());
 
   double proj_x, proj_y;
-
   if (sq_length < std::numeric_limits<double>::epsilon()) {
-    proj_x = source.x();
-    proj_y = source.y();
+    proj_x = static_cast<double>(source.x());
+    proj_y = static_cast<double>(source.y());
   } else {
     double const normed_ratio = unnormed_ratio / sq_length;
     double const clamped_ratio = std::max(std::min(normed_ratio, 1.), 0.);
