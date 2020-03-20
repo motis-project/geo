@@ -132,21 +132,25 @@ struct webmercator {
 
   static merc_bounds tile_bounds_merc(uint32_t const x, uint32_t const y,
                                       uint32_t const z) {
-    auto const pixel_to_merc = [](uint32_t const p, uint32_t const px_z) {
-      return p * resolution(px_z) - kMercOriginShift;
+
+    auto const pixel_to_merc = [](pixel_coord_t const p, uint32_t const px_z) {
+      return resolution(px_z) * p - kMercOriginShift;
     };
 
-    auto const y_reverse = (std::pow(2, z) - 1) - y;
+    auto const y_reverse = (1ull << z) - 1 - y;  // 2 ** z - 1 -y
 
-    auto const minx = pixel_to_merc(x * TileSize, z);
-    auto const miny = pixel_to_merc(y_reverse * TileSize, z);
-    auto const maxx = pixel_to_merc((x + 1) * TileSize, z);
-    auto const maxy = pixel_to_merc((y_reverse + 1) * TileSize, z);
-    return {minx, miny, maxx, maxy};
+    return {
+        pixel_to_merc(static_cast<pixel_coord_t>(x) * TileSize, z),
+        pixel_to_merc(static_cast<pixel_coord_t>(y_reverse) * TileSize, z),
+        pixel_to_merc(static_cast<pixel_coord_t>(x + 1) * TileSize, z),
+        pixel_to_merc(static_cast<pixel_coord_t>(y_reverse + 1) * TileSize, z)};
   }
 
   static pixel_bounds tile_bounds_pixel(uint32_t const x, uint32_t const y) {
-    return {x * TileSize, y * TileSize, (x + 1) * TileSize, (y + 1) * TileSize};
+    return {static_cast<pixel_coord_t>(x) * TileSize,
+            static_cast<pixel_coord_t>(y) * TileSize,
+            static_cast<pixel_coord_t>(x + 1) * TileSize,
+            static_cast<pixel_coord_t>(y + 1) * TileSize};
   }
 
   static pixel_coord_t merc_to_pixel_x(merc_coord_t const x, uint32_t const z) {
@@ -195,9 +199,9 @@ struct webmercator {
     return lut.values[z];
   }
 
-  constexpr static size_t map_size(uint32_t const z) {
+  constexpr static pixel_coord_t map_size(uint32_t const z) {
     assert(z <= MaxZoomLevel);
-    return static_cast<size_t>(kTileSize) << z;
+    return static_cast<pixel_coord_t>(kTileSize) << z;
   }
 };
 
