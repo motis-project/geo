@@ -21,7 +21,7 @@ struct tile {
     return std::tie(z_, x_, y_) == std::tie(o.z_, o.x_, o.y_);
   }
 
-  tile parent() const { return {x_ >> 1, y_ >> 1, z_ - 1}; }
+  [[nodiscard]] tile parent() const { return {x_ >> 1, y_ >> 1, z_ - 1}; }
 
   // numbering of the (four) tiles sharing a parent
   inline uint32_t quad_pos() const { return (y_ % 2 << 1) | (x_ % 2); }
@@ -129,7 +129,7 @@ struct tile_iterator {
            std::tie(o.tile_.z_, o.tile_.x_, o.tile_.y_);
   }
 
-  friend tile_range tile_range_on_z(tile_range const&, uint32_t const);
+  friend tile_range tile_range_on_z(tile_range const&, uint32_t);
 
 private:
   tile tile_;
@@ -145,20 +145,22 @@ struct tile_range {
   iterator begin() { return begin_; }
   iterator end() { return end_; }
 
-  iterator begin() const { return begin_; }
-  iterator end() const { return end_; }
+  [[nodiscard]] iterator begin() const { return begin_; }
+  [[nodiscard]] iterator end() const { return end_; }
 
   iterator begin_;
   iterator end_;
 };
 
 // input tile coordinates are inclusive!
-tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
-                           uint32_t const x_2, uint32_t const y_2,
-                           uint32_t const z);
+
+tile_range make_tile_range(uint32_t z);
+
+tile_range make_tile_range(uint32_t x_1, uint32_t y_1, uint32_t x_2,
+                           uint32_t y_2, uint32_t z);
 
 // input range must not span zoom levels
-tile_range tile_range_on_z(tile_range const&, uint32_t const z);
+tile_range tile_range_on_z(tile_range const&, uint32_t z);
 
 template <typename Proj = default_webmercator>
 tile_range make_tile_range(latlng p_1, latlng p_2, uint32_t z) {
