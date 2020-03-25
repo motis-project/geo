@@ -17,7 +17,7 @@ namespace sc = std::chrono;
   (sc::duration_cast<sc::milliseconds>(_X##_stop - _X##_start).count())
 
 TEST_CASE("xyz haversine_distance") {
-  constexpr auto kSize = 250;  // increase this number for perf eval
+  constexpr auto kSize = 100;  // increase this number for perf eval
   std::vector<geo::latlng> latlng_pos;
   latlng_pos.reserve(kSize);
 
