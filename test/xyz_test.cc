@@ -23,11 +23,11 @@ TEST_CASE("xyz haversine_distance") {
 
   {
     std::mt19937 gen(0);
-    std::uniform_real_distribution<> lat_dist{90., std::nexttoward(-90., -91.)};
-    std::uniform_real_distribution<> lng_dist{180., -180.};
+    std::uniform_real_distribution<> lat_dist{0., 180.};
+    std::uniform_real_distribution<> lng_dist{0., 360.};
 
     for (auto i = 0; i < kSize; ++i) {
-      latlng_pos.emplace_back(lat_dist(gen), lng_dist(gen));
+      latlng_pos.emplace_back(lat_dist(gen) - 90.0, lng_dist(gen) - 180.0);
     }
   }
 
