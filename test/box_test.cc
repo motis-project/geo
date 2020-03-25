@@ -11,5 +11,4 @@ TEST_CASE("basic_box") {
   CHECK(sut.min_.lng_ == 9.072252);
   CHECK(sut.max_.lat_ == 50.002645);
   CHECK(sut.max_.lng_ == 9.143697);
-
 }
