@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <cassert>
+#include <vector>
 
 #include "geo/latlng.h"
 
@@ -49,7 +49,7 @@ inline std::vector<double> serialize(polyline const& p) {
   return result;
 }
 
-template<typename Container>
+template <typename Container>
 inline polyline deserialize(Container const& container) {
   assert(container.size() % 2 == 0);
   polyline result;

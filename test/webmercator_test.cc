@@ -88,7 +88,6 @@ TEST_CASE("merc to latlng", "unproject merc") {
   }
 }
 
-
 TEST_CASE("webmercator", "reversible") {
   using proj = geo::webmercator<4096>;
 
@@ -116,7 +115,6 @@ TEST_CASE("webmercator", "reversible") {
   test(geo::pixel_xy{100, 0}, 0);
   test(geo::pixel_xy{1000, 0}, 0);
 }
-
 
 TEST_CASE("pixel map size") {
   SECTION("tile pyramid") {
