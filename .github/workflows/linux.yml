@@ -42,6 +42,7 @@ jobs:
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       CCACHE_NOHASHDIR: true
+      UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1
 
     steps:
 
