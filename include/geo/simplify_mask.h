@@ -264,4 +264,24 @@ void apply_simplify_mask(std::string const& mask, int req_lvl, Polyline& line) {
   line.erase(first, end(line));
 }
 
+template <typename Polyline>
+void simplify(Polyline& line, uint64_t const pixel_precision = 1) {
+  if (line.empty()) {
+    throw std::runtime_error{"simplify: empty polyline"};
+  }
+  std::vector<bool> mask(line.size(), false);
+  mask.front() = true;
+  mask.back() = true;
+
+  std::vector<detail::range_t> stack_mem;
+  stack_mem.reserve(line.size());
+  detail::stack_t stack{stack_mem};
+
+  uint64_t const threshold = pixel_precision * pixel_precision;
+
+  detail::process_level(line, threshold, stack, mask);
+
+  apply_simplify_mask(mask, line);
+}
+
 }  // namespace geo
