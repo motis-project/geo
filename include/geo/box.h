@@ -75,4 +75,12 @@ struct box {
   latlng min_, max_;
 };
 
+inline geo::box make_box(std::initializer_list<geo::latlng> const coords) {
+  geo::box b;
+  for (auto const& c : coords) {
+    b.extend(c);
+  }
+  return b;
+}
+
 }  // namespace geo
