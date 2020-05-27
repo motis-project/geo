@@ -1,4 +1,4 @@
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <vector>
 
@@ -177,8 +177,8 @@ TEST_CASE("tile_range") {
       for (auto j = i; j < 21; ++j) {
         auto const r = tile_range_on_z(parent.as_tile_range(), j);
         auto const a = list_tiles(tile_range_on_z(r, i));
-        CAPTURE(i)
-        CAPTURE(j)
+        CAPTURE(i);
+        CAPTURE(j);
         CHECK(!a.empty());
         CHECK(e == a);
       }
