@@ -7,6 +7,7 @@ include_directories(include)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 include(cmake/pkg.cmake)
+include(cmake/clang-tidy.cmake)
 
 file(GLOB_RECURSE geo-files src/*.cc)
 add_library(geo STATIC ${geo-files})

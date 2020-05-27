@@ -45,6 +45,7 @@ TEST_CASE("xyz haversine_distance") {
     std::vector<std::vector<double>> latlng_dists;
     for (auto const& pos_a : latlng_pos) {
       std::vector<double> row;
+      row.reserve(latlng_pos.size());
       for (auto const& pos_b : latlng_pos) {
         row.emplace_back(distance(pos_a, pos_b));
       }
@@ -57,6 +58,7 @@ TEST_CASE("xyz haversine_distance") {
     std::vector<std::vector<double>> xyz_dists;
     for (auto const& pos_a : xyz_pos) {
       std::vector<double> row;
+      row.reserve(xyz_pos.size());
       for (auto const& pos_b : xyz_pos) {
         row.emplace_back(haversine_distance(pos_a, pos_b));
       }
@@ -76,6 +78,7 @@ TEST_CASE("xyz haversine_distance") {
 
   SECTION("min_haversine_distance") {
     std::vector<std::vector<geo::latlng>> latlng_pos_skip_self;
+    latlng_pos_skip_self.reserve(kSize);
     {
       for (auto i = 0; i < kSize; ++i) {
         std::vector<geo::latlng> row;
@@ -91,7 +94,8 @@ TEST_CASE("xyz haversine_distance") {
 
     GEO_START_TIMING(latlng_min);
     std::vector<double> latlng_min;
-    for (auto i = 0u; i < kSize; ++i) {
+    latlng_min.reserve(kSize);
+    for (auto i = 0; i < kSize; ++i) {
       auto min_d = std::numeric_limits<double>::infinity();
       for (auto const& pos_b : latlng_pos_skip_self[i]) {
         auto const d = distance(latlng_pos[i], pos_b);
@@ -120,7 +124,8 @@ TEST_CASE("xyz haversine_distance") {
 
     GEO_START_TIMING(xyz_min);
     std::vector<double> xyz_min;
-    for (auto i = 0u; i < kSize; ++i) {
+    xyz_min.reserve(kSize);
+    for (auto i = 0; i < kSize; ++i) {
       xyz_min.emplace_back(
           min_haversine_distance(xyz_pos[i], xyz_pos_skip_self[i]));
     }

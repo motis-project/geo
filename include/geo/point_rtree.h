@@ -15,8 +15,8 @@ struct point_rtree {
   ~point_rtree();
 
   explicit point_rtree(std::vector<value_t> const&);
-  point_rtree(point_rtree&&);
-  point_rtree& operator=(point_rtree&&);
+  point_rtree(point_rtree&&) noexcept;
+  point_rtree& operator=(point_rtree&&) noexcept;
 
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
       latlng const& center, double const min_radius,

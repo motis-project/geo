@@ -1,7 +1,7 @@
 #include "geo/cluster_nearby.h"
 
-#include <stddef.h>
 #include <cmath>
+#include <cstddef>
 #include <algorithm>
 #include <functional>
 #include <iterator>
@@ -30,11 +30,11 @@ struct bounding_box_f {
 };
 
 inline float gc_distance_f(latlng_f const& a, latlng_f const& b) {
-  auto const to_rad = [](float const deg) { return deg * kPi / 180.0f; };
+  auto const to_rad = [](float const deg) { return deg * kPi / 180.0F; };
 
   auto const u = std::sin((to_rad(b.lat_) - to_rad(a.lat_)) / 2);
   auto const v = std::sin((to_rad(b.lng_) - to_rad(a.lng_)) / 2);
-  return 2.0f * kEarthRadius_f *
+  return 2.0F * kEarthRadius_f *
          std::asin(std::sqrt(u * u + std::cos(to_rad(a.lat_)) *
                                          std::cos(to_rad(b.lat_)) * v * v));
 }
@@ -42,9 +42,9 @@ inline float gc_distance_f(latlng_f const& a, latlng_f const& b) {
 inline bounding_box_f compute_bounding_box(latlng_f const& center,
                                            float const dist) {
   // http://gis.stackexchange.com/a/2980
-  float offset_lat = (dist / kEarthRadius_f) * 180.0f / kPi;
+  float offset_lat = (dist / kEarthRadius_f) * 180.0F / kPi;
   float offset_lng =
-      (dist / (kEarthRadius_f * cos(center.lat_ * kPi / 180.0f))) * 180.0f /
+      (dist / (kEarthRadius_f * cos(center.lat_ * kPi / 180.0F))) * 180.0F /
       kPi;
 
   // clang-format off
@@ -85,7 +85,7 @@ inline std::vector<cluster_id_t> make_single_linkage_clusters(
     }
 
     // create new cluster with all candidates and their current cluster
-    if (cluster_candidates.size() > 0) {
+    if (!cluster_candidates.empty()) {
       clusters[i] = i;
       for (auto candidate_id : cluster_candidates) {
         auto old_id = clusters[candidate_id];
@@ -98,7 +98,7 @@ inline std::vector<cluster_id_t> make_single_linkage_clusters(
     }
   }
 
-  for (auto i = 0u; i < clusters.size(); ++i) {
+  for (auto i = 0U; i < clusters.size(); ++i) {
     if (clusters[i] == NO_CLUSTER) {
       clusters[i] = i;
     }
@@ -114,7 +114,7 @@ inline std::vector<cluster_id_t> make_complete_linkage_clusters(
 
   std::vector<cluster_id_t> clusters(coords.size());
   std::generate(begin(clusters), end(clusters),
-                [i = 0ul]() mutable { return i++; });
+                [i = 0UL]() mutable { return i++; });
 
   std::vector<float> distances(clusters.size() * clusters.size(),
                                std::numeric_limits<float>::lowest());
@@ -127,8 +127,8 @@ inline std::vector<cluster_id_t> make_complete_linkage_clusters(
     // compute cluster distance matrix as:
     // maximum distance between members
     // a.k.a Complete-Linkage on wikipedia
-    for (auto i = 0u; i < coords.size(); ++i) {
-      for (auto j = 0u; j < i; j++) {
+    for (auto i = 0U; i < coords.size(); ++i) {
+      for (auto j = 0U; j < i; j++) {
         auto ci = clusters[i];
         auto cj = clusters[j];
 
@@ -145,10 +145,10 @@ inline std::vector<cluster_id_t> make_complete_linkage_clusters(
 
     // find nearest clusters
     auto min_dist = std::numeric_limits<float>::max();
-    auto best_i = 0u;
-    auto best_j = 0u;
-    for (auto i = 0u; i < coords.size(); ++i) {
-      for (auto j = 0u; j < i; j++) {
+    auto best_i = 0U;
+    auto best_j = 0U;
+    for (auto i = 0U; i < coords.size(); ++i) {
+      for (auto j = 0U; j < i; j++) {
         auto const& distance = distances[i * clusters.size() + j];
         if (distance >= 0 && distance <= max_dist) {
           min_dist = distance;
@@ -190,7 +190,7 @@ std::vector<cluster_id_t> cluster_nearby(std::vector<latlng> const& coords_d,
   // prepare indices
   std::vector<std::pair<cluster_id_t, size_t>> sl_cluster_indices;
   sl_cluster_indices.reserve(sl_clusters.size());
-  for (auto i = 0u; i < sl_clusters.size(); ++i) {
+  for (auto i = 0U; i < sl_clusters.size(); ++i) {
     sl_cluster_indices.emplace_back(sl_clusters[i], i);
   }
   std::sort(begin(sl_cluster_indices), end(sl_cluster_indices));
@@ -198,7 +198,7 @@ std::vector<cluster_id_t> cluster_nearby(std::vector<latlng> const& coords_d,
   // subdivide single linkage clusters to complete linkage clusters
   std::vector<cluster_id_t> clusters(coords.size());
   std::generate(begin(clusters), end(clusters),
-                [i = 0ul]() mutable { return i++; });
+                [i = 0UL]() mutable { return i++; });
   auto const make_clusters = [&](auto const lb, auto const ub) {
     if (std::distance(lb, ub) < 3) {
       for (auto it = lb; it != ub; ++it) {
@@ -214,7 +214,7 @@ std::vector<cluster_id_t> cluster_nearby(std::vector<latlng> const& coords_d,
 
     auto cl_clusters = make_complete_linkage_clusters(cl_coords, max_dist);
 
-    for (auto i = 0u; i < cl_clusters.size(); ++i) {
+    for (auto i = 0U; i < cl_clusters.size(); ++i) {
       clusters[(lb + i)->second] = clusters[(lb + cl_clusters[i])->second];
     }
   };

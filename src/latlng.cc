@@ -32,7 +32,7 @@ double bearing(latlng const& p1, latlng const& p2) {
 }
 
 uint32_t tile_hash_32(latlng const& pos) {
-  uint32_t hash = 0;
+  uint32_t hash = 0U;
   constexpr auto const kHashBits = sizeof(hash) * 8;
   constexpr auto const kZMax = kHashBits / 2;
 
@@ -42,7 +42,7 @@ uint32_t tile_hash_32(latlng const& pos) {
          static_cast<uint32_t>(proj::merc_to_pixel_y(merc.y_, kZMax)),
          static_cast<uint32_t>(kZMax)};
 
-  for (auto offset = 0u; offset < kHashBits; offset += 2) {
+  for (auto offset = 0U; offset < kHashBits; offset += 2) {
     assert(t.z_ != 0);
 
     auto quad_pos = t.quad_pos();

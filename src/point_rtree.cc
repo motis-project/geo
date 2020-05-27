@@ -85,8 +85,8 @@ point_rtree::~point_rtree() = default;
 
 point_rtree::point_rtree(std::vector<value_t> const& index)
     : impl_(std::make_unique<point_rtree::impl>(index)) {}
-point_rtree::point_rtree(point_rtree&&) = default;
-point_rtree& point_rtree::operator=(point_rtree&&) = default;
+point_rtree::point_rtree(point_rtree&&) noexcept = default;
+point_rtree& point_rtree::operator=(point_rtree&&) noexcept = default;
 
 std::vector<std::pair<double, size_t>> point_rtree::in_radius_with_distance(
     latlng const& center, double const min_radius,
@@ -110,8 +110,8 @@ std::vector<size_t> point_rtree::in_radius(latlng const& center,
   return impl_->in_radius(center, max_radius);
 }
 
-std::vector<size_t> point_rtree::within(geo::box const& box_) const {
-  return impl_->within(box_);
+std::vector<size_t> point_rtree::within(geo::box const& box) const {
+  return impl_->within(box);
 }
 
 std::vector<std::pair<double, size_t>> point_rtree::nearest(

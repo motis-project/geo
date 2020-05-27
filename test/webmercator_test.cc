@@ -120,7 +120,7 @@ TEST_CASE("pixel map size") {
   SECTION("tile pyramid") {
     using proj = geo::webmercator<4096>;
 
-    for (auto z = 0u; z <= proj::kMaxZoomLevel; ++z) {
+    for (auto z = 0U; z <= proj::kMaxZoomLevel; ++z) {
       INFO("zoom level " << z);
       CHECK(proj::map_size(z) == std::pow(2, z) * proj::kTileSize);
     }
@@ -139,7 +139,7 @@ TEST_CASE("zoom levels") {
   using proj = geo::webmercator<4096>;
 
   auto const northwest = geo::latlng{geo::kMercMaxLatitude, -180.};
-  for (auto z = 0u; z <= proj::kMaxZoomLevel; ++z) {
+  for (auto z = 0U; z <= proj::kMaxZoomLevel; ++z) {
     INFO("northwest @ zoom level " << z);
     auto const px = proj::merc_to_pixel(geo::latlng_to_merc(northwest), z);
     CHECK(px.x_ == 0);
@@ -147,7 +147,7 @@ TEST_CASE("zoom levels") {
   }
 
   auto const southeast = geo::latlng{-geo::kMercMaxLatitude, 180};
-  for (auto z = 0u; z <= proj::kMaxZoomLevel; ++z) {
+  for (auto z = 0U; z <= proj::kMaxZoomLevel; ++z) {
     INFO("southeast @ zoom level " << z);
     auto const px = proj::merc_to_pixel(geo::latlng_to_merc(southeast), z);
     CHECK(px.x_ == proj::map_size(z));
