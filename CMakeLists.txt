@@ -6,6 +6,8 @@ find_package(Boost)
 include_directories(include)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+include(cmake/pkg.cmake)
+
 file(GLOB_RECURSE geo-files src/*.cc)
 add_library(geo STATIC ${geo-files})
 target_compile_features(geo PUBLIC cxx_std_17)

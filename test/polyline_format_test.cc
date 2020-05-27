@@ -6,7 +6,7 @@
 // https://developers.google.com/maps/documentation/utilities/polylinealgorithm
 TEST_CASE("polyline_format_google_coord") {
 
-  geo::polyline_encoder enc;
+  geo::polyline_encoder<> enc;
   enc.push_difference(-179.9832104 * geo::polyline_encoder<>::kPrecision);
   CHECK("`~oia@" == enc.buf_);
 
