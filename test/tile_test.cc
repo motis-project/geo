@@ -184,4 +184,12 @@ TEST_CASE("tile_range") {
       }
     }
   }
+
+  SECTION("tile_range_full") {
+    for (auto z = 0U; z < 10U; ++z) {
+      for (auto const& tile : geo::make_tile_range(z)) {
+        REQUIRE(z == tile.z_);
+      }
+    }
+  }
 }

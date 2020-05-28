@@ -36,8 +36,9 @@ tile_iterator_bounds tile::bounds_on_z(uint32_t const z) const {
 
 tile_range make_tile_range(uint32_t z) {
   auto const bounds = make_no_bounds(z);
-  return tile_range{tile_iterator{bounds.minx_, bounds.miny_, z, bounds},
-                    tile_iterator{bounds.maxx_, bounds.maxy_, z, bounds}};
+  return tile_range{
+      tile_iterator{bounds.minx_, bounds.miny_, z, bounds},
+      tile_iterator{bounds.minx_ << 1, bounds.miny_ << 1, z + 1, bounds}};
 }
 
 tile_range make_tile_range(uint32_t const x_1, uint32_t const y_1,
