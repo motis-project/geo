@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <string>
 #include <string_view>
 
 #include "geo/polyline.h"
