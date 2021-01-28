@@ -8,11 +8,11 @@
 #include <string>
 #include <vector>
 
+#include <cmath>
 #include "geo/constants.h"
 #include "geo/latlng.h"
 #include "geo/polyline.h"
 #include "geo/webmercator.h"
-#include <cmath>
 
 namespace geo {
 
@@ -208,7 +208,8 @@ inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
   }
 
   auto str = ss.str();
-  std::memcpy(const_cast<char*>(str.data()), // NOLINT(cppcoreguidelines-pro-type-const-cast)
+  std::memcpy(const_cast<char*>(
+                  str.data()),  // NOLINT(cppcoreguidelines-pro-type-const-cast)
               reinterpret_cast<char const*>(&lvls), sizeof lvls);
   return str;
 }

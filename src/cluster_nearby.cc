@@ -44,8 +44,8 @@ inline bounding_box_f compute_bounding_box(latlng_f const& center,
   // http://gis.stackexchange.com/a/2980
   float offset_lat = (dist / kEarthRadius_f) * 180.0F / kPi;
   float offset_lng =
-      (dist / (kEarthRadius_f * std::cos(center.lat_ * kPi / 180.0F))) * 180.0F /
-      kPi;
+      (dist / (kEarthRadius_f * std::cos(center.lat_ * kPi / 180.0F))) *
+      180.0F / kPi;
 
   // clang-format off
   return {center.lat_ + offset_lat,
