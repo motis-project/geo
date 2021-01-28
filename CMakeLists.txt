@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(geo)
 
-find_package(Boost)
-
-include_directories(include)
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
 include(cmake/pkg.cmake)
 include(cmake/clang-tidy.cmake)
 
@@ -18,7 +13,7 @@ if (NOT MSVC)
 else()
   target_compile_definitions(geo PUBLIC _USE_MATH_DEFINES)
 endif()
-target_link_libraries(geo ${Boost_LIBRARIES})
+target_link_libraries(geo boost)
 
 file(GLOB_RECURSE geo-test-files test/*.cc)
 
@@ -27,4 +22,4 @@ target_compile_features(geo-test PUBLIC cxx_std_17)
 if (NOT MSVC)
   set_target_properties(geo-test PROPERTIES COMPILE_FLAGS "-Wall -Wextra")
 endif()
-target_link_libraries(geo-test geo ${Boost_LIBRARIES} doctest)
+target_link_libraries(geo-test geo doctest)
