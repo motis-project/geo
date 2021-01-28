@@ -2,3 +2,7 @@
   url=git@github.com:motis-project/Catch2.git
   branch=master
   commit=e5c9a58d66ff0780e956b5447573af9d6b9b2ca3
+[boost]
+  url=git@github.com:motis-project/boost.git
+  branch=master
+  commit=d60b850a4be7e7690e4098c0e55125608c040d28
