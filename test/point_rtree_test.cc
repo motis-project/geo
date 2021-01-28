@@ -1,4 +1,4 @@
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 
 #include "geo/point_rtree.h"
 
@@ -13,19 +13,19 @@ TEST_CASE("point rtree") {
 
   auto const mensa = geo::latlng{49.8756276, 8.6577833};
 
-  SECTION("finds algo") {
+  SUBCASE("finds algo") {
     auto const r = rtree.in_radius(mensa, 450);
     REQUIRE(r.size() == 1);
     CHECK(r[0] == 2);
   }
 
-  SECTION("finds lui") {
+  SUBCASE("finds lui") {
     auto const r = rtree.in_radius(mensa, 450, 1000);
     REQUIRE(r.size() == 1);
     CHECK(r[0] == 1);
   }
 
-  SECTION("finds all ordered") {
+  SUBCASE("finds all ordered") {
     auto const r = rtree.in_radius_with_distance(mensa, 10000);
     REQUIRE(r.size() == 3);
     CHECK(r[0].second == 2);

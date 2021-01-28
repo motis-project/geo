@@ -1,4 +1,4 @@
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 
 #include <chrono>
 #include <iostream>
@@ -40,7 +40,7 @@ TEST_CASE("xyz haversine_distance") {
   GEO_STOP_TIMING(xyz_conv);
   std::cout << "latlng2xyz conv: " << GEO_TIMING_MS(xyz_conv) << " ms\n";
 
-  SECTION("haversine_distance") {
+  SUBCASE("haversine_distance") {
     GEO_START_TIMING(latlng_dists);
     std::vector<std::vector<double>> latlng_dists;
     for (auto const& pos_a : latlng_pos) {
@@ -71,12 +71,12 @@ TEST_CASE("xyz haversine_distance") {
     for (auto i = 0; i < kSize; ++i) {
       REQUIRE(latlng_dists[i].size() == xyz_dists[i].size());
       for (auto j = 0; j < kSize; ++j) {
-        CHECK(latlng_dists[i][j] == Approx(xyz_dists[i][j]));
+        CHECK(latlng_dists[i][j] == doctest::Approx(xyz_dists[i][j]));
       }
     }
   }
 
-  SECTION("min_haversine_distance") {
+  SUBCASE("min_haversine_distance") {
     std::vector<std::vector<geo::latlng>> latlng_pos_skip_self;
     latlng_pos_skip_self.reserve(kSize);
     {
@@ -134,7 +134,7 @@ TEST_CASE("xyz haversine_distance") {
 
     REQUIRE(latlng_min.size() == xyz_min.size());
     for (auto i = 0; i < kSize; ++i) {
-      CHECK(latlng_min[i] == Approx(xyz_min[i]));
+      CHECK(latlng_min[i] == doctest::Approx(xyz_min[i]));
     }
   }
 }

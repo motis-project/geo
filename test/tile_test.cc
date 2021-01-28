@@ -1,4 +1,4 @@
-#include "catch2/catch.hpp"
+#include "doctest/doctest.h"
 
 #include <vector>
 
@@ -13,7 +13,7 @@ std::vector<geo::tile> list_tiles(geo::tile_range const& range) {
 }
 
 TEST_CASE("tile::direct_children()") {
-  SECTION("root") {
+  SUBCASE("root") {
     geo::tile root{0, 0, 0};
     auto const actual = list_tiles(root.direct_children());
 
@@ -22,7 +22,7 @@ TEST_CASE("tile::direct_children()") {
     CHECK(expected == actual);
   }
 
-  SECTION("darmstadt") {
+  SUBCASE("darmstadt") {
     geo::tile parent{8585, 5565, 14};
     auto const actual = list_tiles(parent.direct_children());
 
@@ -36,7 +36,7 @@ TEST_CASE("tile::direct_children()") {
 }
 
 TEST_CASE("tile::FOO_on_z()") {
-  SECTION("same level") {
+  SUBCASE("same level") {
     geo::tile uut(23, 42, 3);
 
     auto const actual = list_tiles(uut.range_on_z(3));
@@ -49,7 +49,7 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 
-  SECTION("1 level down") {
+  SUBCASE("1 level down") {
     geo::tile uut{0, 0, 0};
     auto const actual = list_tiles(uut.range_on_z(1));
 
@@ -62,7 +62,7 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 
-  SECTION("2 levels down") {
+  SUBCASE("2 levels down") {
     geo::tile uut{56, 84, 7};
     auto const actual = list_tiles(uut.range_on_z(9));
 
@@ -79,7 +79,7 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 
-  SECTION("1 level up") {
+  SUBCASE("1 level up") {
     geo::tile uut{17170, 11131, 15};
     auto const actual = list_tiles(uut.range_on_z(14));
 
@@ -91,7 +91,7 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 
-  SECTION("3 levels up") {
+  SUBCASE("3 levels up") {
     geo::tile uut{15670, 131, 15};
     auto const actual = list_tiles(uut.range_on_z(12));
 
@@ -103,7 +103,7 @@ TEST_CASE("tile::FOO_on_z()") {
     CHECK(a_bounds == e_bounds);
   }
 
-  SECTION("all levels up") {
+  SUBCASE("all levels up") {
     geo::tile uut{12314, 23455, 15};
     auto const actual = list_tiles(uut.range_on_z(0));
 
@@ -117,7 +117,7 @@ TEST_CASE("tile::FOO_on_z()") {
 }
 
 TEST_CASE("tile_iterator") {
-  SECTION("increment") {
+  SUBCASE("increment") {
     geo::tile_iterator it{0, 0, 1};
     ++it;
     CHECK(*it == geo::tile(1, 0, 1));
@@ -129,7 +129,7 @@ TEST_CASE("tile_iterator") {
     CHECK(*it == geo::tile(0, 0, 2));
   }
 
-  SECTION("decrement") {
+  SUBCASE("decrement") {
     geo::tile_iterator it{0, 0, 2};
     --it;
     CHECK(*it == geo::tile(1, 1, 1));
@@ -143,7 +143,7 @@ TEST_CASE("tile_iterator") {
     CHECK(*it == geo::tile(0, 0, 0));
   }
 
-  SECTION("bounds") {
+  SUBCASE("bounds") {
     geo::tile_iterator it{2, 4, 2, {2, 4, 3, 5}};
     CHECK(*it == geo::tile(2, 4, 2));
     ++it;
@@ -154,7 +154,7 @@ TEST_CASE("tile_iterator") {
 }
 
 TEST_CASE("tile_range") {
-  SECTION("make_tile_range") {
+  SUBCASE("make_tile_range") {
     auto const sut = geo::make_tile_range(2, 3, 3, 4, 6);
 
     std::vector<geo::tile> expected;
@@ -167,7 +167,7 @@ TEST_CASE("tile_range") {
     CHECK(expected == actual);
   }
 
-  SECTION("tile_range_on_z") {
+  SUBCASE("tile_range_on_z") {
     geo::tile parent{8585, 5565, 14};
     for (auto i = 0; i < 21; ++i) {
       auto const e = list_tiles(parent.range_on_z(i));
@@ -185,7 +185,7 @@ TEST_CASE("tile_range") {
     }
   }
 
-  SECTION("tile_range_full") {
+  SUBCASE("tile_range_full") {
     for (auto z = 0U; z < 10U; ++z) {
       for (auto const& tile : geo::make_tile_range(z)) {
         REQUIRE(z == tile.z_);
