@@ -58,6 +58,14 @@ jobs:
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
             os: ubuntu-latest
+          - name: Clang Tidy
+            cxx: clang++-11
+            cc: clang-11
+            mode: Debug
+            cxxflags: -stdlib=libc++
+            ldflags: -lc++abi
+            lint: true
+            os: ubuntu-20.04
     env:
       UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1
     steps:
@@ -100,7 +108,8 @@ jobs:
           -DCMAKE_CXX_FLAGS_DEBUG="" \
           -DCMAKE_CXX_LINKER_FLAGS=${{ matrix.config.ldflags }}" \
           -DCMAKE_CXX_EXE_LINKER_FLAGS="${{ matrix.config.ldflags }} \
-          -DCMAKE_BUILD_TYPE=${{ matrix.config.mode }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.config.mode }} \
+          -DGEO_LINT=${{ matrix.config.lint }}
       - name: Build
         run: cmake --build build --target geo-test
 
