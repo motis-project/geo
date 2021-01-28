@@ -62,11 +62,11 @@ inline std::vector<cluster_id_t> make_single_linkage_clusters(
   for (unsigned i = 0; i < coords.size(); ++i) {
     std::vector<cluster_id_t> cluster_candidates;
 
-    const auto& s1 = coords[i];
+    auto const& s1 = coords[i];
     auto box = detail::compute_bounding_box(s1, max_dist);
 
     for (unsigned j = 0; j < i; ++j) {
-      const auto& s2 = coords[j];
+      auto const& s2 = coords[j];
 
       // not in bounding box
       // clang-format off
