@@ -5,4 +5,4 @@
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master
-  commit=5088c040e84d3138e33255e6bdcfec99e71c28f6
+  commit=be2e8545eb0b33227b4e7bd0361f1cc89549262c
