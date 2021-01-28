@@ -12,6 +12,7 @@
 #include "geo/latlng.h"
 #include "geo/polyline.h"
 #include "geo/webmercator.h"
+#include <cmath>
 
 namespace geo {
 
@@ -33,7 +34,7 @@ uint64_t sq_perpendicular_dist(Coord const& source, Coord const& target,
   auto const sq_length = static_cast<double>(slope_vec.x() * slope_vec.x() +
                                              slope_vec.y() * slope_vec.y());
 
-  double proj_x, proj_y;
+  double proj_x = NAN, proj_y = NAN;
   if (sq_length < std::numeric_limits<double>::epsilon()) {
     proj_x = static_cast<double>(source.x());
     proj_y = static_cast<double>(source.y());
@@ -59,7 +60,7 @@ bool process_level(Polyline const& line, uint64_t const threshold,
   assert(stack.empty());
 
   auto last = 0;
-  for (auto i = 1u; i < mask.size(); ++i) {
+  for (auto i = 1U; i < mask.size(); ++i) {
     if (mask[i]) {
       if (i - last > 1) {
         stack.emplace(last, i);
@@ -184,7 +185,7 @@ inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
   char buf = 0;
   auto buf_pos = 0;
 
-  for (auto i = 0u; i < mask.size(); ++i) {
+  for (auto i = 0U; i < mask.size(); ++i) {
     if (i + 1 < mask.size() && mask[i] == mask[i + 1]) {
       continue;
     }
@@ -192,7 +193,7 @@ inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
     lvls |= 1 << i;
 
     for (auto bit : mask[i]) {
-      buf |= bit << buf_pos;
+      buf |= static_cast<int>(bit) << buf_pos;
 
       if (++buf_pos == 8) {
         ss.put(buf);
@@ -207,7 +208,7 @@ inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
   }
 
   auto str = ss.str();
-  std::memcpy(const_cast<char*>(str.data()),
+  std::memcpy(const_cast<char*>(str.data()), // NOLINT(cppcoreguidelines-pro-type-const-cast)
               reinterpret_cast<char const*>(&lvls), sizeof lvls);
   return str;
 }
@@ -216,22 +217,22 @@ struct simplify_mask_reader {
   explicit simplify_mask_reader(char const* data, uint32_t req_lvl) {
     assert(req_lvl <= kMaxSimplifyZoomLevel);
 
-    uint32_t lvls;
+    uint32_t lvls = 0;
     std::memcpy(&lvls, data, sizeof(uint32_t));
     assert(lvls != 0);
 
     std::memcpy(&size_, data + sizeof(uint32_t), sizeof(uint32_t));
 
-    uint32_t skipped_levels = 0u;
-    for (auto i = 0u; i < 32u; ++i) {
+    uint32_t skipped_levels = 0U;
+    for (auto i = 0U; i < 32U; ++i) {
       if (i >= req_lvl) {
         break;
       }
-      if ((lvls & (1u << i)) != 0) {
+      if ((lvls & (1U << i)) != 0) {
         ++skipped_levels;
       }
     }
-    assert(lvls >= (1u << skipped_levels));
+    assert(lvls >= (1U << skipped_levels));
 
     base_ptr_ = data + 2 * sizeof(uint32_t);
     offset_ = skipped_levels * size_;
@@ -241,10 +242,10 @@ struct simplify_mask_reader {
 
   bool get_bit(size_t const pos) const {
     auto byte = *(base_ptr_ + (offset_ + pos) / 8);
-    return (byte >> (offset_ + pos) % 8) & 0x1;
+    return ((byte >> (offset_ + pos) % 8) & 0x1) != 0;
   }
 
-  uint32_t size_;
+  uint32_t size_{};
   char const* base_ptr_;
   uint32_t offset_;
 };

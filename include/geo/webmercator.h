@@ -137,7 +137,7 @@ struct webmercator {
       return resolution(px_z) * p - kMercOriginShift;
     };
 
-    auto const y_reverse = (1ull << z) - 1 - y;  // 2 ** z - 1 -y
+    auto const y_reverse = (1ULL << z) - 1 - y;  // 2 ** z - 1 -y
 
     return {
         pixel_to_merc(static_cast<pixel_coord_t>(x) * TileSize, z),
@@ -184,19 +184,19 @@ struct webmercator {
     assert(z <= MaxZoomLevel);
 
     struct look_up_table {
-      constexpr look_up_table() : values() {
+      constexpr look_up_table() : values_() {
         constexpr auto kInitialResolution =
             2 * kPI * kMercEarthRadius / TileSize;
         for (auto i = 0; i <= MaxZoomLevel; ++i) {
-          values[i] = kInitialResolution / (1 << i);
+          values_[i] = kInitialResolution / (1 << i);
         }
       }
 
-      double values[MaxZoomLevel + 1];
+      double values_[MaxZoomLevel + 1];
     };
     constexpr auto lut = look_up_table{};
 
-    return lut.values[z];
+    return lut.values_[z];
   }
 
   constexpr static pixel_coord_t map_size(uint32_t const z) {

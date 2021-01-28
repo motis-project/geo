@@ -44,7 +44,7 @@ inline bounding_box_f compute_bounding_box(latlng_f const& center,
   // http://gis.stackexchange.com/a/2980
   float offset_lat = (dist / kEarthRadius_f) * 180.0F / kPi;
   float offset_lng =
-      (dist / (kEarthRadius_f * cos(center.lat_ * kPi / 180.0F))) * 180.0F /
+      (dist / (kEarthRadius_f * std::cos(center.lat_ * kPi / 180.0F))) * 180.0F /
       kPi;
 
   // clang-format off
@@ -62,11 +62,11 @@ inline std::vector<cluster_id_t> make_single_linkage_clusters(
   for (unsigned i = 0; i < coords.size(); ++i) {
     std::vector<cluster_id_t> cluster_candidates;
 
-    auto& s1 = coords[i];
+    const auto& s1 = coords[i];
     auto box = detail::compute_bounding_box(s1, max_dist);
 
     for (unsigned j = 0; j < i; ++j) {
-      auto& s2 = coords[j];
+      const auto& s2 = coords[j];
 
       // not in bounding box
       // clang-format off

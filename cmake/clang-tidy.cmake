@@ -9,14 +9,14 @@ if(GEO_TIDY)
   if(GEO_CLANG_TIDY_COMMAND)
     set(CLANG_TIDY_COMMAND "${GEO_CLANG_TIDY_COMMAND}")
   else()
-    find_program(CLANG_TIDY_COMMAND NAMES clang-tidy clang-tidy-9)
+    find_program(CLANG_TIDY_COMMAND NAMES clang-tidy clang-tidy-11)
   endif()
 
   if(NOT CLANG_TIDY_COMMAND)
     message(FATAL_ERROR "CMake_RUN_CLANG_TIDY is ON but clang-tidy is not found!")
   endif()
 
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_COMMAND}" -fix)
 
   file(SHA1 ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy.in clang_tidy_sha1)
   set(CLANG_TIDY_DEFINITIONS "CLANG_TIDY_SHA1=${clang_tidy_sha1}")

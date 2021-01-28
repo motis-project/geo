@@ -133,12 +133,12 @@ TEST_CASE("apply_simplify_mask") {
 
 TEST_CASE("simplify_mask_serialize") {
   auto const get_lvls = [](auto const& str) -> uint32_t {
-    uint32_t r;
+    uint32_t r = 0;
     std::memcpy(&r, str.data(), sizeof(uint32_t));
     return r;
   };
   auto const get_size = [](auto const& str) -> uint32_t {
-    uint32_t r;
+    uint32_t r = 0;
     std::memcpy(&r, str.data() + sizeof(uint32_t), sizeof(uint32_t));
     return r;
   };

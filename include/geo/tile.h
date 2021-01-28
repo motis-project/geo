@@ -28,8 +28,8 @@ struct tile {
 
   tile_range as_tile_range() const;
   tile_range direct_children() const;
-  tile_range range_on_z(uint32_t const z) const;
-  tile_iterator_bounds bounds_on_z(uint32_t const z) const;
+  tile_range range_on_z(uint32_t z) const;
+  tile_iterator_bounds bounds_on_z(uint32_t z) const;
 
   friend std::ostream& operator<<(std::ostream& o, tile const& t) {
     return o << "(" << t.x_ << "," << t.y_ << "," << t.z_ << ")";
@@ -39,7 +39,7 @@ struct tile {
 };
 
 inline tile_iterator_bounds make_no_bounds(uint32_t z) {
-  return tile_iterator_bounds{0, 0, 1u << z, 1u << z};
+  return tile_iterator_bounds{0, 0, 1U << z, 1U << z};
 }
 
 struct tile_iterator {
@@ -141,9 +141,6 @@ struct tile_range {
 
   tile_range() = default;
   tile_range(iterator begin, iterator end) : begin_(begin), end_(end) {}
-
-  iterator begin() { return begin_; }
-  iterator end() { return end_; }
 
   [[nodiscard]] iterator begin() const { return begin_; }
   [[nodiscard]] iterator end() const { return end_; }

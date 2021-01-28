@@ -1,5 +1,6 @@
 #include "geo/polygon.h"
 
+#include <cmath>
 #include <fstream>
 #include <istream>
 #include <string>
@@ -25,7 +26,7 @@ simple_polygon read_poly_file(std::string const& filename) {
       break;
     }
 
-    double lat, lng;
+    double lat = NAN, lng = NAN;
     in >> lng >> lat;
 
     polygon.emplace_back(lat, lng);

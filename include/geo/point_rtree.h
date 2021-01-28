@@ -18,21 +18,24 @@ struct point_rtree {
   point_rtree(point_rtree&&) noexcept;
   point_rtree& operator=(point_rtree&&) noexcept;
 
+  point_rtree(point_rtree const&) = delete;
+  point_rtree& operator=(point_rtree const&) = delete;
+
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
-      latlng const& center, double const min_radius,
-      double const max_radius) const;
+      latlng const& center, double min_radius,
+      double max_radius) const;
 
   std::vector<std::pair<double, size_t>> nearest(latlng const& center,
-                                                 unsigned const) const;
+                                                 unsigned) const;
 
   std::vector<std::pair<double, size_t>> in_radius_with_distance(
-      latlng const& center, double const max_radius) const;
+      latlng const& center, double max_radius) const;
 
-  std::vector<size_t> in_radius(latlng const& center, double const min_radius,
-                                double const max_radius) const;
+  std::vector<size_t> in_radius(latlng const& center, double min_radius,
+                                double max_radius) const;
 
   std::vector<size_t> in_radius(latlng const& center,
-                                double const max_radius) const;
+                                double max_radius) const;
 
   std::vector<size_t> within(geo::box const&) const;
 
@@ -45,7 +48,8 @@ template <typename C, typename F>
 point_rtree make_point_rtree(C const& container, F fun) {
   auto i = 0;
   std::vector<point_rtree::value_t> index;
-  for (auto const& e : container) {
+  index.reserve(container.size());
+for (auto const& e : container) {
     index.emplace_back(fun(e), i++);
   }
   return point_rtree{index};
