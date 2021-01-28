@@ -1,4 +1,8 @@
-[catch]
-  url=git@github.com:motis-project/Catch2.git
+[boost]
+  url=git@github.com:motis-project/boost.git
   branch=master
-  commit=e5c9a58d66ff0780e956b5447573af9d6b9b2ca3
+  commit=d60b850a4be7e7690e4098c0e55125608c040d28 
+[doctest]
+  url=git@github.com:motis-project/doctest.git
+  branch=master
+  commit=be2e8545eb0b33227b4e7bd0361f1cc89549262c

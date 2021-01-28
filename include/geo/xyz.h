@@ -13,8 +13,8 @@ namespace geo {
 
 struct xyz {
   xyz() = default;
-  xyz(double x, double y, double z) : x_(x), y_(y), z_(z) {}
-  xyz(latlng const& ll) {
+  explicit xyz(double x, double y, double z) : x_(x), y_(y), z_(z) {}
+  explicit xyz(latlng const& ll) {
     auto const lat_rads = (kPI / 180.) * ll.lat_;
     auto const lng_rads = (kPI / 180.) * ll.lng_;
 

@@ -3,6 +3,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set(pkg-url "pkg")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set(pkg-url "pkg.exe")
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  set(pkg-url "pkgosx")
 else()
   message(STATUS "Not downloading pkg tool. Using pkg from PATH.")
   set(pkg-bin "pkg")
@@ -20,13 +22,12 @@ if (pkg-url)
   endif()
 endif()
 
-message(STATUS "${pkg-bin} -l -h -f")
-execute_process(
-  COMMAND ${pkg-bin} -l -h -f
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
-
-if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/deps")
+if (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+  message(STATUS "${pkg-bin} -l -h -f")
+  execute_process(
+    COMMAND ${pkg-bin} -l -h -f
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
   add_subdirectory(deps)
 endif()
 
