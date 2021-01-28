@@ -109,7 +109,7 @@ jobs:
           -DCMAKE_CXX_LINKER_FLAGS=${{ matrix.config.ldflags }}" \
           -DCMAKE_CXX_EXE_LINKER_FLAGS="${{ matrix.config.ldflags }} \
           -DCMAKE_BUILD_TYPE=${{ matrix.config.mode }} \
-          -DGEO_LINT=${{ matrix.config.lint }}
+          -DGEO_TIDY=${{ matrix.config.lint }}
       - name: Build
         run: cmake --build build --target geo-test
 
