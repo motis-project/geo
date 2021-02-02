@@ -29,7 +29,7 @@ simple_polygon read_poly_file(std::string const& filename) {
     double lat = NAN, lng = NAN;
     in >> lng >> lat;
 
-    polygon.emplace_back(lat, lng);
+    polygon.emplace_back(geo::latlng{lat, lng});
     std::getline(in, ignored);
   }
   return polygon;

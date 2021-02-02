@@ -120,8 +120,8 @@ geo::polyline decode_polyline(std::string_view const str) {
   while (first != last) {
     lat += read(&first, last);
     lng += read(&first, last);
-    polyline.emplace_back(static_cast<double>(lat) / kPrecision,
-                          static_cast<double>(lng) / kPrecision);
+    polyline.emplace_back(geo::latlng{static_cast<double>(lat) / kPrecision,
+                                      static_cast<double>(lng) / kPrecision});
   }
   return polyline;
 }

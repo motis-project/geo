@@ -13,10 +13,10 @@ namespace geo {
 
 struct box {
   box()
-      : min_(std::numeric_limits<double>::infinity(),
-             std::numeric_limits<double>::infinity()),
-        max_(-std::numeric_limits<double>::infinity(),
-             -std::numeric_limits<double>::infinity()) {}
+      : min_{std::numeric_limits<double>::infinity(),
+             std::numeric_limits<double>::infinity()},
+        max_{-std::numeric_limits<double>::infinity(),
+             -std::numeric_limits<double>::infinity()} {}
 
   box(latlng min, latlng max) : min_(min), max_(max) {}
 
