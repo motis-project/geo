@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cinttypes>
 #include <vector>
 
 #include "geo/latlng.h"
@@ -35,7 +36,7 @@ polyline simplify(polyline const& line, uint32_t const z) {
   return simplify(line, lut.values[z]);
 }
 
-polyline extract(polyline const&, size_t from, size_t to);
+polyline extract(polyline const&, std::size_t from, std::size_t to);
 
 inline std::vector<double> serialize(polyline const& p) {
   std::vector<double> result;
