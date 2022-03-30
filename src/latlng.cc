@@ -11,6 +11,10 @@
 
 namespace geo {
 
+std::ostream& operator<<(std::ostream& out, latlng const& pos) {
+  return out << '(' << pos.lat_ << ", " << pos.lng_ << ")";
+}
+
 double distance(latlng const& a, latlng const& b) {
   return boost::geometry::distance(a, b) * kEarthRadiusMeters;
 }

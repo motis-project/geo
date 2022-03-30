@@ -1,11 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <iosfwd>
 #include <tuple>
 
 namespace geo {
 
 struct latlng {
+  friend std::ostream& operator<<(std::ostream&, latlng const&);
+
   friend bool operator<(latlng const& lhs, latlng const& rhs) {
     return std::tie(lhs.lat_, lhs.lng_) < std::tie(rhs.lat_, rhs.lng_);
   }
