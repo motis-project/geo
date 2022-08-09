@@ -43,7 +43,7 @@ private:
 };
 
 template <typename C, typename F>
-point_rtree make_point_rtree(C const& container, F fun) {
+point_rtree make_point_rtree(C&& container, F fun) {
   auto i = 0;
   std::vector<point_rtree::value_t> index;
   index.reserve(container.size());
