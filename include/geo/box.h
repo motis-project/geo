@@ -72,6 +72,14 @@ struct box {
            pos.lng_ > min_.lng_ && pos.lng_ < max_.lng_;
   }
 
+  bool overlaps(box const& b) const {
+    auto const lat_overlaps =
+        min_.lat_ <= b.max_.lat_ && max_.lat_ >= b.min_.lat_;
+    auto const lng_overlaps =
+        min_.lng_ <= b.max_.lng_ && max_.lng_ >= b.min_.lng_;
+    return lat_overlaps && lng_overlaps;
+  }
+
   latlng min_, max_;
 };
 
