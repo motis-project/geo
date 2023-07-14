@@ -37,6 +37,8 @@ struct point_rtree {
 
   std::vector<size_t> within(geo::box const&) const;
 
+  std::size_t size() const;
+
 private:
   struct impl;
   std::unique_ptr<impl> impl_;

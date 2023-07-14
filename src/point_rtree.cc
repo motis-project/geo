@@ -77,6 +77,8 @@ struct point_rtree::impl {
     return results;
   }
 
+  std::size_t size() const { return rtree_.size(); }
+
   rtree_t rtree_;
 };
 
@@ -118,5 +120,7 @@ std::vector<std::pair<double, size_t>> point_rtree::nearest(
     latlng const& center, unsigned const k) const {
   return impl_->nearest(center, k);
 }
+
+std::size_t point_rtree::size() const { return impl_->size(); }
 
 }  // namespace geo
