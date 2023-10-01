@@ -19,9 +19,6 @@ double distance(latlng const& a, latlng const& b) {
   return boost::geometry::distance(a, b) * kEarthRadiusMeters;
 }
 
-double to_rad(double const& deg) { return deg * kPI / 180.0; };
-double to_deg(double const& rad) { return rad * 180.0 / kPI; };
-
 // following non-public boost implementation
 double bearing(latlng const& p1, latlng const& p2) {
   double dlng = to_rad(p1.lng_) - to_rad(p2.lng_);  // CCW from NORTH!
@@ -75,6 +72,44 @@ uint32_t tile_hash_32(latlng const& pos) {
   assert(t.z_ == 0);
 
   return hash;
+}
+
+latlng closest_on_segment(latlng const& x, latlng const& segment_from,
+                          latlng const& segment_to) {
+  auto const merc_x = latlng_to_merc(x);
+  auto const merc_from = latlng_to_merc(segment_from);
+  auto const merc_to = latlng_to_merc(segment_to);
+
+  if (merc_x == merc_from || merc_x == merc_to) {
+    return x;
+  }
+
+  auto const seg_dir = merc_to - merc_from;
+  auto const seg_len = seg_dir.length();
+
+  if (seg_len < kEpsilon) {
+    return segment_from;
+  }
+
+  auto const start_vec = merc_x - merc_from;
+  auto const end_vec = merc_x - merc_to;
+  auto const start_angle =
+      std::acos(seg_dir.dot(start_vec) / (seg_len * start_vec.length()));
+  auto const end_angle =
+      std::acos(seg_dir.dot(end_vec) / (seg_len * end_vec.length()));
+
+  assert(!std::isnan(start_angle) && !std::isnan(end_angle));
+
+  if (start_angle >= 90.0_rad) {
+    return segment_from;
+  } else if (end_angle <= 90.0_rad) {
+    return segment_to;
+  } else {
+    // law of sines
+    auto const beta = 90.0_rad - start_angle;
+    auto const seg_offset = start_vec.length() * std::sin(beta);
+    return merc_to_latlng(merc_from + seg_offset * seg_dir.normalize());
+  }
 }
 
 }  // namespace geo

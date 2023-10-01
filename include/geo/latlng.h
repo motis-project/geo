@@ -26,6 +26,9 @@ double bearing(latlng const&, latlng const&);
 
 latlng midpoint(latlng const&, latlng const&);
 
+latlng closest_on_segment(latlng const& x, latlng const& segment_from,
+                          latlng const& segment_to);
+
 uint32_t tile_hash_32(latlng const&);
 
 }  // namespace geo

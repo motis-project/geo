@@ -7,6 +7,7 @@
 
 #include "geo/constants.h"
 #include "geo/latlng.h"
+#include "geo/rad_deg.h"
 
 //
 // These utilities translate between three coordinate systems:
@@ -59,9 +60,60 @@ struct xy {
   T& x() { return x_; }
   T& y() { return y_; }
 
-  friend bool operator==(xy const& lhs, xy const& rhs) {
-    return std::tie(lhs.x_, lhs.y_) == std::tie(rhs.x_, rhs.y_);
+  double length() const { return std::sqrt(x_ * x_ + y_ * y_); }
+
+  xy normalize() const {
+    auto const len = length();
+    auto copy = *this;
+    copy.x_ /= len;
+    copy.y_ /= len;
+    return copy;
   }
+  xy normal(bool left = true) const { return left ? xy{-y_, x_} : xy{y_, -x_}; }
+  double dot(xy const& o) const { return x_ * o.x_ + y_ * o.y_; }
+  double cross(xy const& o) const { return x_ * o.y_ - o.x_ * y_; }
+
+  friend xy operator+(xy const& lhs, xy const& rhs) {
+    return {lhs.x() + rhs.x(), lhs.y() + rhs.y()};
+  }
+
+  friend xy operator-(xy const& lhs, xy const& rhs) {
+    return {lhs.x() - rhs.x(), lhs.y() - rhs.y()};
+  }
+
+  friend xy operator*(xy const& v, double s) { return {v.x() * s, v.y() * s}; }
+  friend xy operator*(double s, xy const& v) { return v * s; }
+
+  friend void operator*=(xy& v, double s) {
+    v.x_ *= s;
+    v.y_ *= s;
+  }
+
+  friend xy operator/(xy const& v, double s) { return {v.x() / s, v.y() / s}; }
+
+  friend void operator/=(xy& v, double s) {
+    v.x_ /= s;
+    v.y_ /= s;
+  }
+
+  void operator+=(xy const& o) {
+    x_ += o.x_;
+    y_ += o.y_;
+  }
+
+  void operator-=(xy const& o) {
+    x_ -= o.x_;
+    y_ -= o.y_;
+  }
+
+  bool isnan() const { return std::isnan(x_) || std::isnan(y_); }
+
+  friend bool operator==(xy const& a, xy const& b) {
+    return std::fabs(a.x_ - b.x_) < kEpsilon &&
+           std::fabs(a.y_ - b.y_) < kEpsilon;
+  }
+
+  friend bool operator!=(xy const& a, xy const& b) { return !(a == b); }
 
   friend std::ostream& operator<<(std::ostream& out, xy const& pos) {
     return out << "(" << pos.x_ << ", " << pos.y_ << ")";
@@ -79,9 +131,9 @@ struct bounds {
   bounds(T const minx, T const miny, T const maxx, T const maxy)
       : minx_(minx), miny_(miny), maxx_(maxx), maxy_(maxy) {}
 
-  friend bool operator==(bounds<T> const& lhs, bounds<T> const& rhs) {
-    return std::tie(lhs.minx_, lhs.miny_, lhs.maxx_, lhs.maxy_) ==
-           std::tie(rhs.minx_, rhs.miny_, rhs.maxx_, rhs.maxy_);
+  friend bool operator==(bounds<T> const& a, bounds<T> const& b) {
+    return std::tie(a.minx_, a.miny_, a.maxx_, a.maxy_) ==
+           std::tie(b.minx_, b.miny_, b.maxx_, b.maxy_);
   }
 
   friend std::ostream& operator<<(std::ostream& out, bounds<T> const& b) {
@@ -104,12 +156,11 @@ constexpr auto kMercOriginShift = kPI * kMercEarthRadius;
 constexpr auto kMercMaxLatitude = 85.0511287798;
 
 inline merc_xy latlng_to_merc(latlng const& pos) {
-  constexpr auto d = kPI / 180.;
   auto const lat =
       std::max(std::min(kMercMaxLatitude, pos.lat_), -kMercMaxLatitude);
-  auto const sin = std::sin(lat * d);
+  auto const sin = std::sin(to_rad(lat));
 
-  return {kMercEarthRadius * pos.lng_ * d,
+  return {kMercEarthRadius * to_rad(pos.lng_),
           kMercEarthRadius * std::log((1. + sin) / (1. - sin)) / 2.};
 }
 
