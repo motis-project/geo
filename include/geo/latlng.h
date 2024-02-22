@@ -32,3 +32,12 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
 uint32_t tile_hash_32(latlng const&);
 
 }  // namespace geo
+
+#if __has_include("fmt/ostream.h")
+
+#include "fmt/ostream.h"
+
+template <>
+struct fmt::formatter<geo::latlng> : ostream_formatter {};
+
+#endif
