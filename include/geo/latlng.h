@@ -7,6 +7,9 @@
 namespace geo {
 
 struct latlng {
+  double lat() const { return lat_; }
+  double lng() const { return lng_; }
+
   friend std::ostream& operator<<(std::ostream&, latlng const&);
 
   friend bool operator<(latlng const& lhs, latlng const& rhs) {
