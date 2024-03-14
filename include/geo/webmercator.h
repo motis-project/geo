@@ -210,7 +210,8 @@ struct webmercator {
 
   static pixel_coord_t merc_to_pixel_y(merc_coord_t const y, uint32_t const z) {
     return static_cast<pixel_coord_t>(
-        std::round(map_size(z) - ((y + kMercOriginShift) / resolution(z))));
+        std::round(static_cast<double>(map_size(z)) -
+                   ((y + kMercOriginShift) / resolution(z))));
   }
 
   static pixel_xy merc_to_pixel(merc_xy const& merc, uint32_t const z) {
@@ -219,12 +220,13 @@ struct webmercator {
 
   constexpr static merc_coord_t pixel_to_merc_x(pixel_coord_t const x,
                                                 uint32_t const z) {
-    return x * resolution(z) - kMercOriginShift;
+    return static_cast<double>(x) * resolution(z) - kMercOriginShift;
   }
 
   constexpr static merc_coord_t pixel_to_merc_y(pixel_coord_t const y,
                                                 uint32_t const z) {
-    return (map_size(z) - y) * resolution(z) - kMercOriginShift;
+    return static_cast<double>(map_size(z) - y) * resolution(z) -
+           kMercOriginShift;
   }
 
   static merc_xy pixel_to_merc(pixel_xy const& px, uint32_t const z) {
