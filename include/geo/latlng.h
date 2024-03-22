@@ -32,6 +32,8 @@ latlng midpoint(latlng const&, latlng const&);
 latlng closest_on_segment(latlng const& x, latlng const& segment_from,
                           latlng const& segment_to);
 
+latlng destination_point(latlng const& source, double const distance, double const bearing);
+
 uint32_t tile_hash_32(latlng const&);
 
 }  // namespace geo
