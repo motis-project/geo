@@ -112,4 +112,33 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
   }
 }
 
+// Destination point given distance and bearing from start point
+// http://www.movable-type.co.uk/scripts/latlong.html
+latlng destination_point(geo::latlng const& source,
+                       double const distance,
+                       double const bearing) {
+  // convert to rad
+  auto const lat_source_rad = to_rad(source.lat_);
+  auto const bearing_rad = to_rad(bearing);
+
+  // reused
+  auto const sin_lat_source = std::sin(lat_source_rad);
+  auto const cos_lat_source = std::cos(lat_source_rad);
+  auto const angular_distance = distance / kEarthRadiusMeters;
+  auto const sin_angular_distance = std::sin(angular_distance);
+  auto const cos_angular_distance = std::cos(angular_distance);
+
+  // calculate lat/lon of destination
+  auto const lat_dest =
+      std::asin(sin_lat_source * cos_angular_distance +
+                cos_lat_source * sin_angular_distance * std::cos(bearing_rad));
+  auto const lon_dest =
+      to_rad(source.lng_) +
+      std::atan2(std::sin(bearing_rad) * sin_angular_distance * cos_lat_source,
+                 cos_angular_distance - sin_lat_source * std::sin(lat_dest));
+
+  // convert back to deg
+  return geo::latlng{to_deg(lat_dest), to_deg(lon_dest)};
+}
+
 }  // namespace geo
