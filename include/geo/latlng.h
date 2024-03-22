@@ -38,11 +38,17 @@ uint32_t tile_hash_32(latlng const&);
 
 }  // namespace geo
 
-#if __has_include("fmt/ostream.h")
+#if __has_include("fmt/format.h")
 
-#include "fmt/ostream.h"
+#include "fmt/format.h"
 
 template <>
-struct fmt::formatter<geo::latlng> : ostream_formatter {};
+struct fmt::formatter<geo::latlng> : nested_formatter<double> {
+  auto format(geo::latlng const& p, format_context& ctx) const {
+    return write_padded(ctx, [&](auto out) {
+      return format_to(out, "({}, {})", nested(p.lat_), nested(p.lng_));
+    });
+  }
+};
 
 #endif
