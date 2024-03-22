@@ -129,10 +129,10 @@ latlng destination_point(geo::latlng const& source,
   auto const cos_angular_distance = std::cos(angular_distance);
 
   // calculate lat/lon of destination
-  auto lat_dest =
+  auto const lat_dest =
       std::asin(sin_lat_source * cos_angular_distance +
                 cos_lat_source * sin_angular_distance * std::cos(bearing_rad));
-  auto lon_dest =
+  auto const lon_dest =
       to_rad(source.lng_) +
       std::atan2(std::sin(bearing_rad) * sin_angular_distance * cos_lat_source,
                  cos_angular_distance - sin_lat_source * std::sin(lat_dest));
