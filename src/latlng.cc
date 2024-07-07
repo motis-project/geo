@@ -93,10 +93,20 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
 
   auto const start_vec = merc_x - merc_from;
   auto const end_vec = merc_x - merc_to;
-  auto const start_angle =
-      std::acos(seg_dir.dot(start_vec) / (seg_len * start_vec.length()));
-  auto const end_angle =
-      std::acos(seg_dir.dot(end_vec) / (seg_len * end_vec.length()));
+
+  auto const start_rel =
+      seg_dir.dot(start_vec) / (seg_len * start_vec.length());
+  if (start_rel >= 1 - kEpsilon) {
+    return segment_from;
+  }
+
+  auto const end_rel = seg_dir.dot(end_vec) / (seg_len * end_vec.length());
+  if (end_rel >= 1 - kEpsilon) {
+    return segment_to;
+  }
+
+  auto const start_angle = std::acos(start_rel);
+  auto const end_angle = std::acos(end_rel);
 
   assert(!std::isnan(start_angle) && !std::isnan(end_angle));
 
@@ -114,9 +124,8 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
 
 // Destination point given distance and bearing from start point
 // http://www.movable-type.co.uk/scripts/latlong.html
-latlng destination_point(geo::latlng const& source,
-                       double const distance,
-                       double const bearing) {
+latlng destination_point(geo::latlng const& source, double const distance,
+                         double const bearing) {
   // convert to rad
   auto const lat_source_rad = to_rad(source.lat_);
   auto const bearing_rad = to_rad(bearing);
