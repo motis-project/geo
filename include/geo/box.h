@@ -18,7 +18,9 @@ struct box {
         max_{-std::numeric_limits<double>::infinity(),
              -std::numeric_limits<double>::infinity()} {}
 
-  box(latlng min, latlng max) : min_(min), max_(max) {}
+  box(latlng const a, latlng const b)
+      : min_{std::min(a.lat_, b.lat_), std::min(a.lng_, b.lng_)},
+        max_{std::max(a.lat_, b.lat_), std::max(a.lng_, b.lng_)} {}
 
   explicit box(polyline const& line) : box{} { extend(line); }
 
