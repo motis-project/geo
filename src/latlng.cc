@@ -98,11 +98,15 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
       seg_dir.dot(start_vec) / (seg_len * start_vec.length());
   if (start_rel >= 1 - kEpsilon) {
     return segment_from;
+  } else if (start_rel <= -1 + kEpsilon) {
+    return segment_to;
   }
 
   auto const end_rel = seg_dir.dot(end_vec) / (seg_len * end_vec.length());
   if (end_rel >= 1 - kEpsilon) {
     return segment_to;
+  } else if (end_rel <= -1 + kEpsilon) {
+    return segment_from;
   }
 
   auto const start_angle = std::acos(start_rel);
