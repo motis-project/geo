@@ -27,7 +27,8 @@ TEST_CASE("xyz haversine_distance") {
     std::uniform_real_distribution<> lng_dist{0., 360.};
 
     for (auto i = 0; i < kSize; ++i) {
-      latlng_pos.emplace_back(lat_dist(gen) - 90.0, lng_dist(gen) - 180.0);
+      latlng_pos.push_back(
+          geo::latlng{lat_dist(gen) - 90.0, lng_dist(gen) - 180.0});
     }
   }
 

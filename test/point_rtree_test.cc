@@ -1,13 +1,15 @@
 #include "doctest/doctest.h"
 
+#include "geo/latlng.h"
+
 #include "geo/point_rtree.h"
 
 TEST_CASE("point rtree") {
   std::vector<geo::latlng> points;
 
-  points.emplace_back(49.8726016, 8.6310396);  // Hauptbahnhof
-  points.emplace_back(49.8728246, 8.6512529);  // Luisenplatz
-  points.emplace_back(49.8780513, 8.6547033);  // Algo Offices
+  points.push_back(geo::latlng{49.8726016, 8.6310396});  // Hauptbahnhof
+  points.push_back(geo::latlng{49.8728246, 8.6512529});  // Luisenplatz
+  points.push_back(geo::latlng{49.8780513, 8.6547033});  // Algo Offices
 
   auto const rtree = make_point_rtree(points, [](auto const& e) { return e; });
 
