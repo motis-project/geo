@@ -114,13 +114,13 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
 
   assert(!std::isnan(start_angle) && !std::isnan(end_angle));
 
-  if (start_angle >= 90.0_deg) {
+  if (start_angle >= to_rad(90.0)) {
     return segment_from;
-  } else if (end_angle <= 90.0_deg) {
+  } else if (end_angle <= to_rad(90.0)) {
     return segment_to;
   } else {
     // law of sines
-    auto const beta = 90.0_deg - start_angle;
+    auto const beta = to_rad(90.0) - start_angle;
     auto const seg_offset = start_vec.length() * std::sin(beta);
     return merc_to_latlng(merc_from + seg_offset * seg_dir.normalize());
   }
