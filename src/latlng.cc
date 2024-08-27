@@ -74,16 +74,17 @@ uint32_t tile_hash_32(latlng const& pos) {
   return hash;
 }
 
-inline double get_rel(merc_xy const& v, merc_xy const& seg_dir,
-                      double const seg_len) {
-  return seg_dir.dot(v) / (seg_len * v.length());
-}
-
-inline double get_angle(double const x) {
-  if (x >= 1 - kEpsilon) {
+inline double get_angle(merc_xy const& v, merc_xy const& seg_dir,
+                        double const seg_len) {
+  auto const rel = seg_dir.dot(v) / (seg_len * v.length());
+  if (rel >= 1 - kEpsilon) {
     return 0;
+  } else if (rel <= -1 + kEpsilon) {
+    return 180;
   }
-  return std::acos(x);
+  auto const angle = std::acos(rel);
+  assert(!std::isnan(angle));
+  return angle;
 }
 
 latlng closest_on_segment(latlng const& x, latlng const& segment_from,
@@ -106,21 +107,12 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
   auto const start_vec = merc_x - merc_from;
   auto const end_vec = merc_to - merc_x;
 
-  auto start_rel = get_rel(start_vec, seg_dir, seg_len);
-  if (start_rel <= -1 + kEpsilon) {
-    return segment_from;
-  }
-  auto end_rel = get_rel(end_vec, seg_dir, seg_len);
-  if (end_rel <= -1 + kEpsilon) {
-    return segment_to;
-  }
-
-  auto const start_angle = get_angle(start_rel);
+  auto const start_angle = get_angle(start_vec, seg_dir, seg_len);
   assert(!std::isnan(start_angle));
   if (start_angle >= to_rad(90.0)) {
     return segment_from;
   }
-  auto const end_angle = get_angle(end_rel);
+  auto const end_angle = get_angle(end_vec, seg_dir, seg_len);
   assert(!std::isnan(end_angle));
   if (end_angle >= to_rad(90.0)) {
     return segment_to;
