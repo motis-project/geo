@@ -63,4 +63,16 @@ inline polyline deserialize(Container const& container) {
   return result;
 }
 
+struct polyline_candidate {
+  friend bool operator<(polyline_candidate const& a, polyline_candidate const& b) {
+    return a.distance_to_polyline_ < b.distance_to_polyline_;
+  }
+
+  double distance_to_polyline_;
+  geo::latlng best_;
+  std::size_t segment_idx_;
+};
+
+polyline_candidate distance_to_polyline(latlng const&, polyline const&);
+
 }  // namespace geo
