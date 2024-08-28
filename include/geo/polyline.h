@@ -64,7 +64,8 @@ inline polyline deserialize(Container const& container) {
 }
 
 struct polyline_candidate {
-  friend bool operator<(polyline_candidate const& a, polyline_candidate const& b) {
+  friend bool operator<(polyline_candidate const& a,
+                        polyline_candidate const& b) {
     return a.distance_to_polyline_ < b.distance_to_polyline_;
   }
 
