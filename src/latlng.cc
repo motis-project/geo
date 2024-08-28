@@ -74,6 +74,19 @@ uint32_t tile_hash_32(latlng const& pos) {
   return hash;
 }
 
+inline double get_angle(merc_xy const& v, merc_xy const& seg_dir,
+                        double const seg_len) {
+  auto const rel = seg_dir.dot(v) / (seg_len * v.length());
+  if (rel >= 1 - kEpsilon) {
+    return 0;
+  } else if (rel <= -1 + kEpsilon) {
+    return 180;
+  }
+  auto const angle = std::acos(rel);
+  assert(!std::isnan(angle));
+  return angle;
+}
+
 latlng closest_on_segment(latlng const& x, latlng const& segment_from,
                           latlng const& segment_to) {
   auto const merc_x = latlng_to_merc(x);
@@ -92,38 +105,23 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
   }
 
   auto const start_vec = merc_x - merc_from;
-  auto const end_vec = merc_x - merc_to;
+  auto const end_vec = merc_to - merc_x;
 
-  auto const start_rel =
-      seg_dir.dot(start_vec) / (seg_len * start_vec.length());
-  if (start_rel >= 1 - kEpsilon) {
-    return segment_from;
-  } else if (start_rel <= -1 + kEpsilon) {
-    return segment_to;
-  }
-
-  auto const end_rel = seg_dir.dot(end_vec) / (seg_len * end_vec.length());
-  if (end_rel >= 1 - kEpsilon) {
-    return segment_to;
-  } else if (end_rel <= -1 + kEpsilon) {
-    return segment_from;
-  }
-
-  auto const start_angle = std::acos(start_rel);
-  auto const end_angle = std::acos(end_rel);
-
-  assert(!std::isnan(start_angle) && !std::isnan(end_angle));
-
+  auto const start_angle = get_angle(start_vec, seg_dir, seg_len);
+  assert(!std::isnan(start_angle));
   if (start_angle >= to_rad(90.0)) {
     return segment_from;
-  } else if (end_angle <= to_rad(90.0)) {
-    return segment_to;
-  } else {
-    // law of sines
-    auto const beta = to_rad(90.0) - start_angle;
-    auto const seg_offset = start_vec.length() * std::sin(beta);
-    return merc_to_latlng(merc_from + seg_offset * seg_dir.normalize());
   }
+  auto const end_angle = get_angle(end_vec, seg_dir, seg_len);
+  assert(!std::isnan(end_angle));
+  if (end_angle >= to_rad(90.0)) {
+    return segment_to;
+  }
+
+  // law of sines
+  auto const beta = to_rad(90.0) - start_angle;
+  auto const seg_offset = start_vec.length() * std::sin(beta);
+  return merc_to_latlng(merc_from + seg_offset * seg_dir.normalize());
 }
 
 // Destination point given distance and bearing from start point
