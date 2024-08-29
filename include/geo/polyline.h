@@ -4,6 +4,8 @@
 #include <cinttypes>
 #include <vector>
 
+#include "utl/pairwise.h"
+
 #include "geo/latlng.h"
 
 namespace geo {
@@ -61,6 +63,38 @@ inline polyline deserialize(Container const& container) {
   }
 
   return result;
+}
+
+struct polyline_candidate {
+  friend bool operator<(polyline_candidate const& a,
+                        polyline_candidate const& b) {
+    return a.distance_to_polyline_ < b.distance_to_polyline_;
+  }
+
+  double distance_to_polyline_;
+  geo::latlng best_;
+  std::size_t segment_idx_;
+};
+
+template <typename Polyline>
+polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
+  auto min = std::numeric_limits<double>::max();
+  auto best = latlng{};
+  auto best_segment_idx = 0U;
+  auto segment_idx = 0U;
+  for (auto const [a, b] : utl::pairwise(c)) {
+    auto const candidate = closest_on_segment(x, a, b);
+    auto const dist = distance(x, candidate);
+    if (dist < min) {
+      min = dist;
+      best = candidate;
+      best_segment_idx = segment_idx;
+    }
+    ++segment_idx;
+  }
+  return polyline_candidate{.distance_to_polyline_ = min,
+          .best_ = best,
+          .segment_idx_ = best_segment_idx};
 }
 
 }  // namespace geo
