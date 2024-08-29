@@ -15,7 +15,7 @@ TEST_CASE("polylineDistanceToPolyline_pointBeforeLine_getStartPoint") {
 
   auto const closest = distance_to_polyline(test_point, graph);
 
-  auto const start_coordinate = *graph.begin();
+  auto const start_coordinate = graph.front();
   CHECK(closest.distance_to_polyline_ ==
         distance(test_point, start_coordinate));
   CHECK(closest.best_ == start_coordinate);
@@ -27,7 +27,7 @@ TEST_CASE("polylineDistanceToPolyline_pointAfterLine_getEndPoint") {
 
   auto const closest = distance_to_polyline(test_point, graph);
 
-  auto const end_coordinate = *graph.rbegin();
+  auto const end_coordinate = graph.back();
   CHECK(closest.segment_idx_ == 0);
   CHECK(closest.distance_to_polyline_ == distance(test_point, end_coordinate));
   CHECK(closest.best_ == end_coordinate);
