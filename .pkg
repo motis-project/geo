@@ -6,3 +6,7 @@
   url=git@github.com:motis-project/doctest.git
   branch=master
   commit=70e8f76437b76dd5e9c0a2eb9b907df190ab71a0
+[utl]
+  url=git@github.com:motis-project/utl.git
+  branch=master
+  commit=77aac494c45d2b070e65fe712abc34ac74a91d0f
