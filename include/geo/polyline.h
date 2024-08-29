@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cinttypes>
+#include <algorithm>
 #include <ranges>
 #include <vector>
 
@@ -77,11 +78,30 @@ struct polyline_candidate {
   std::size_t segment_idx_;
 };
 
-#if __cpp_lib_ranges
+#if __cpp_lib_ranges_fold
 template <std::ranges::range Polyline>
+polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
+  auto const segments = c | std::views::slide(2) | std::views::enumerate;
+  return std::ranges::fold_left(
+      segments,
+      polyline_candidate{
+          .distance_to_polyline_ = std::numeric_limits<double>::max(),
+          .best_ = latlng{},
+          .segment_idx_ = 0u},
+      [&x](auto const best, auto const& current) {
+        auto const& [index, segment] = current;
+        auto const candidate = closest_on_segment(x, segment[0], segment[1]);
+        auto const dist = distance(x, candidate);
+        return (dist < best.distance_to_polyline_)
+                   ? polyline_candidate{.distance_to_polyline_ = dist,
+                                        .best_ = candidate,
+                                        .segment_idx_ =
+                                            static_cast<std::size_t>(index)}
+                   : best;
+      });
+}
 #else
 template <typename Polyline>
-#endif
 polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
   auto min = std::numeric_limits<double>::max();
   auto best = latlng{};
@@ -101,5 +121,6 @@ polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
           .best_ = best,
           .segment_idx_ = best_segment_idx};
 }
+#endif
 
 }  // namespace geo

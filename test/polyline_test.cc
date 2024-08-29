@@ -62,3 +62,29 @@ TEST_CASE("polylineDistanceToPolyline_pointNotOnLine_getClosestPoint") {
         kEpsilon);
   CHECK(distance(closest.best_, best) < kEpsilon);
 }
+
+TEST_CASE(
+    "polylineSplitPolyline_multipleCoordinates_getCorrectSegmentsForEach") {
+  auto const graph =
+      polyline{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+               {0.4f, 1.4f}, {1.4f, 1.4f}, {1.4f, 0.4f}, {0.4f, 0.4f}};
+  auto const test_entries =
+      std::vector<std::tuple<geo::latlng, geo::latlng, std::size_t>>{
+          {{0.99f, 0.95f}, {1.0f, 0.95f}, 1u},
+          {{0.9f, 1.01f}, {0.9f, 1.0f}, 2u},
+          {{0.6f, 0.9f}, {0.6f, 1.0f}, 2u},
+          {{0.41f, 1.39f}, {0.41f, 1.40f}, 4u},
+          {{1.0f, 1.5f}, {1.0f, 1.4f}, 4u},
+          {{1.39f, 1.4f}, {1.39f, 1.4f}, 4u},
+          {{1.41f, 0.6f}, {1.4f, 0.6f}, 5u},
+      };
+
+  for (auto const& test_entry : test_entries) {
+    auto const& [test_point, expected_point, expected_segment] = test_entry;
+
+    auto const closest = distance_to_polyline(test_point, graph);
+
+    CHECK(closest.segment_idx_ == expected_segment);
+    CHECK(distance(closest.best_, expected_point) < 2 * kEpsilon);
+  }
+}
