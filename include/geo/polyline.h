@@ -2,7 +2,10 @@
 
 #include <cassert>
 #include <cinttypes>
+#include <ranges>
 #include <vector>
+
+#include "utl/pairwise.h"
 
 #include "geo/latlng.h"
 
@@ -74,6 +77,29 @@ struct polyline_candidate {
   std::size_t segment_idx_;
 };
 
-polyline_candidate distance_to_polyline(latlng const&, polyline const&);
+#if __cpp_lib_ranges
+template <std::ranges::range Polyline>
+#else
+template <typename Polyline>
+#endif
+polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
+  auto min = std::numeric_limits<double>::max();
+  auto best = latlng{};
+  auto best_segment_idx = 0U;
+  auto segment_idx = 0U;
+  for (auto const [a, b] : utl::pairwise(c)) {
+    auto const candidate = closest_on_segment(x, a, b);
+    auto const dist = distance(x, candidate);
+    if (dist < min) {
+      min = dist;
+      best = candidate;
+      best_segment_idx = segment_idx;
+    }
+    ++segment_idx;
+  }
+  return {.distance_to_polyline_ = min,
+          .best_ = best,
+          .segment_idx_ = best_segment_idx};
+}
 
 }  // namespace geo
