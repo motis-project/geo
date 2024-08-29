@@ -9,7 +9,7 @@
 
 using namespace geo;
 
-double abs(double const x) { return x < 0 ? -x : x; }
+double abs_val(double const x) { return x < 0 ? -x : x; }
 
 TEST_CASE("polylineDistanceToPolyline_pointBeforeLine_getStartPoint") {
   auto const graph = polyline{{0.0f, 0.0f}, {1.0f, 0.0f}};
@@ -56,9 +56,9 @@ TEST_CASE("polylineDistanceToPolyline_pointNotOnLine_getClosestPoint") {
 
   auto const best = latlng{1.0f, 0.5f};
   CHECK(closest.segment_idx_ == 1);
-  CHECK(abs(distance(test_point, best) - distance(test_point, closest.best_)) <
+  CHECK(abs_val(distance(test_point, best) - distance(test_point, closest.best_)) <
         kEpsilon);
-  CHECK(abs(closest.distance_to_polyline_ - distance(test_point, best)) <
+  CHECK(abs_val(closest.distance_to_polyline_ - distance(test_point, best)) <
         kEpsilon);
   CHECK(distance(closest.best_, best) < kEpsilon);
 }
