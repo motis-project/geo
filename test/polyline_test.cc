@@ -1,7 +1,5 @@
 #include "doctest/doctest.h"
 
-#include <ranges>
-
 #include "geo/constants.h"
 #include "geo/latlng.h"
 
