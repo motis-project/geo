@@ -92,7 +92,7 @@ polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
     }
     ++segment_idx;
   }
-  return {.distance_to_polyline_ = min,
+  return polyline_candidate{.distance_to_polyline_ = min,
           .best_ = best,
           .segment_idx_ = best_segment_idx};
 }
