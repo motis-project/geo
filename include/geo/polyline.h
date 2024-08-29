@@ -2,8 +2,6 @@
 
 #include <cassert>
 #include <cinttypes>
-#include <algorithm>
-#include <ranges>
 #include <vector>
 
 #include "utl/pairwise.h"
