@@ -54,8 +54,8 @@ TEST_CASE("polylineDistanceToPolyline_pointNotOnLine_getClosestPoint") {
 
   auto const best = latlng{1.0f, 0.5f};
   CHECK(closest.segment_idx_ == 1);
-  CHECK(std::abs(distance(test_point, best) - distance(test_point, closest.best_)) <
-        kEpsilon);
+  CHECK(std::abs(distance(test_point, best) -
+                 distance(test_point, closest.best_)) < kEpsilon);
   CHECK(std::abs(closest.distance_to_polyline_ - distance(test_point, best)) <
         kEpsilon);
   CHECK(distance(closest.best_, best) < kEpsilon);

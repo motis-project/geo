@@ -92,9 +92,7 @@ polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
     }
     ++segment_idx;
   }
-  return polyline_candidate{.distance_to_polyline_ = min,
-          .best_ = best,
-          .segment_idx_ = best_segment_idx};
+  return {min, best, best_segment_idx};
 }
 
 }  // namespace geo
