@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cmath>
 #include <cstdint>
 #include <array>
 #include <iosfwd>
+#include <limits>
 #include <tuple>
 
 namespace geo {
@@ -18,7 +20,10 @@ struct latlng {
   }
 
   friend bool operator==(latlng const& lhs, latlng const& rhs) noexcept {
-    return std::tie(lhs.lat_, lhs.lng_) == std::tie(rhs.lat_, rhs.lng_);
+    auto const lat_diff = std::abs(lhs.lat_ - rhs.lat_);
+    auto const lng_diff = std::abs(lhs.lng_ - rhs.lng_);
+    return lat_diff < 100 * std::numeric_limits<double>::epsilon() &&
+           lng_diff < 100 * std::numeric_limits<double>::epsilon();
   }
 
   std::array<double, 2> lnglat() const noexcept { return {lng_, lat_}; }
