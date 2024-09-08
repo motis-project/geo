@@ -76,8 +76,8 @@ struct polyline_candidate {
   std::size_t segment_idx_;
 };
 
-template <typename Polyline>
-polyline_candidate distance_to_polyline(latlng const& x, Polyline&& c) {
+template <typename Candidate = polyline_candidate, typename Polyline>
+Candidate distance_to_polyline(latlng const& x, Polyline&& c) {
   auto min = std::numeric_limits<double>::max();
   auto best = latlng{};
   auto best_segment_idx = 0U;
