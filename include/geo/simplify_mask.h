@@ -42,12 +42,14 @@ uint64_t sq_perpendicular_dist(Coord const& source, Coord const& target,
     double const normed_ratio = unnormed_ratio / sq_length;
     double const clamped_ratio = std::max(std::min(normed_ratio, 1.), 0.);
 
-    proj_x = (1. - clamped_ratio) * source.x() + target.x() * clamped_ratio;
-    proj_y = (1. - clamped_ratio) * source.y() + target.y() * clamped_ratio;
+    proj_x = (1. - clamped_ratio) * static_cast<double>(source.x()) +
+             static_cast<double>(target.x()) * clamped_ratio;
+    proj_y = (1. - clamped_ratio) * static_cast<double>(source.y()) +
+             static_cast<double>(target.y()) * clamped_ratio;
   }
 
-  auto const dx = proj_x - test.x();
-  auto const dy = proj_y - test.y();
+  auto const dx = proj_x - static_cast<double>(test.x());
+  auto const dy = proj_y - static_cast<double>(test.y());
   return dx * dx + dy * dy;
 }
 
@@ -59,10 +61,10 @@ bool process_level(Polyline const& line, uint64_t const threshold,
                    stack_t& stack, std::vector<bool>& mask) {
   assert(stack.empty());
 
-  auto last = 0;
+  auto last = 0U;
   for (auto i = 1U; i < mask.size(); ++i) {
     if (mask[i]) {
-      if (i - last > 1) {
+      if (i - last > 1U) {
         stack.emplace(last, i);
       }
 
