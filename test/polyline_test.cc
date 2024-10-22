@@ -10,8 +10,8 @@
 using namespace geo;
 
 TEST_CASE("polylineDistanceToPolyline_pointBeforeLine_getStartPoint") {
-  auto const graph = polyline{{0.0f, 0.0f}, {1.0f, 0.0f}};
-  auto const test_point = latlng{-1.0f, 0.0f};
+  auto const graph = polyline{{0.0F, 0.0F}, {1.0F, 0.0F}};
+  auto const test_point = latlng{-1.0F, 0.0F};
 
   auto const closest = distance_to_polyline(test_point, graph);
 
@@ -22,8 +22,8 @@ TEST_CASE("polylineDistanceToPolyline_pointBeforeLine_getStartPoint") {
 }
 
 TEST_CASE("polylineDistanceToPolyline_pointAfterLine_getEndPoint") {
-  auto const graph = polyline{{0.0f, 0.0f}, {1.0f, 0.0f}};
-  auto const test_point = latlng{2.0f, 0.0f};
+  auto const graph = polyline{{0.0F, 0.0F}, {1.0F, 0.0F}};
+  auto const test_point = latlng{2.0F, 0.0F};
 
   auto const closest = distance_to_polyline(test_point, graph);
 
@@ -35,8 +35,8 @@ TEST_CASE("polylineDistanceToPolyline_pointAfterLine_getEndPoint") {
 
 TEST_CASE("polylineDistanceToPolyline_pointOnLine_getPointOnLine") {
   auto const graph =
-      polyline{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
-  auto const test_point = latlng{0.5f, 0.0f};
+      polyline{{0.0F, 0.0F}, {1.0F, 0.0F}, {1.0F, 1.0F}, {0.0F, 1.0F}};
+  auto const test_point = latlng{0.5F, 0.0F};
 
   auto const closest = distance_to_polyline(test_point, graph);
 
@@ -47,12 +47,12 @@ TEST_CASE("polylineDistanceToPolyline_pointOnLine_getPointOnLine") {
 
 TEST_CASE("polylineDistanceToPolyline_pointNotOnLine_getClosestPoint") {
   auto const graph =
-      polyline{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
-  auto const test_point = latlng{0.75f, 0.5f};
+      polyline{{0.0F, 0.0F}, {1.0F, 0.0F}, {1.0F, 1.0F}, {0.0F, 1.0F}};
+  auto const test_point = latlng{0.75F, 0.5F};
 
   auto const closest = distance_to_polyline(test_point, graph);
 
-  auto const best = latlng{1.0f, 0.5f};
+  auto const best = latlng{1.0F, 0.5F};
   CHECK(closest.segment_idx_ == 1);
   CHECK(std::abs(distance(test_point, best) -
                  distance(test_point, closest.best_)) < kEpsilon);
@@ -64,17 +64,17 @@ TEST_CASE("polylineDistanceToPolyline_pointNotOnLine_getClosestPoint") {
 TEST_CASE(
     "polylineSplitPolyline_multipleCoordinates_getCorrectSegmentsForEach") {
   auto const graph =
-      polyline{{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
-               {0.4f, 1.4f}, {1.4f, 1.4f}, {1.4f, 0.4f}, {0.4f, 0.4f}};
+      polyline{{0.0F, 0.0F}, {1.0F, 0.0F}, {1.0F, 1.0F}, {0.0F, 1.0F},
+               {0.4F, 1.4F}, {1.4F, 1.4F}, {1.4F, 0.4F}, {0.4F, 0.4F}};
   auto const test_entries =
       std::vector<std::tuple<geo::latlng, geo::latlng, std::size_t>>{
-          {{0.99f, 0.95f}, {1.0f, 0.95f}, 1u},
-          {{0.9f, 1.01f}, {0.9f, 1.0f}, 2u},
-          {{0.6f, 0.9f}, {0.6f, 1.0f}, 2u},
-          {{0.41f, 1.39f}, {0.41f, 1.40f}, 4u},
-          {{1.0f, 1.5f}, {1.0f, 1.4f}, 4u},
-          {{1.39f, 1.4f}, {1.39f, 1.4f}, 4u},
-          {{1.41f, 0.6f}, {1.4f, 0.6f}, 5u},
+          {{0.99F, 0.95F}, {1.0F, 0.95F}, 1U},
+          {{0.9F, 1.01F}, {0.9F, 1.0F}, 2U},
+          {{0.6F, 0.9F}, {0.6F, 1.0F}, 2U},
+          {{0.41F, 1.39F}, {0.41F, 1.40F}, 4U},
+          {{1.0F, 1.5F}, {1.0F, 1.4F}, 4U},
+          {{1.39F, 1.4F}, {1.39F, 1.4F}, 4U},
+          {{1.41F, 0.6F}, {1.4F, 0.6F}, 5U},
       };
 
   for (auto const& test_entry : test_entries) {
