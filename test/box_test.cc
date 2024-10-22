@@ -11,4 +11,8 @@ TEST_CASE("basic_box") {
   CHECK(sut.min_.lng_ == 9.072252);
   CHECK(sut.max_.lat_ == 50.002645);
   CHECK(sut.max_.lng_ == 9.143697);
+
+  CHECK(sut.contains(sut));
+  CHECK(sut.contains(geo::make_box({{50.0, 9.1}})));
+  CHECK_FALSE(sut.contains(geo::make_box({{49.9, 9.11}, {50.0, 9.12}})));
 }
