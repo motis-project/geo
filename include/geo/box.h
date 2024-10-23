@@ -87,6 +87,10 @@ struct box {
     return lat_overlaps && lng_overlaps;
   }
 
+  friend bool operator==(box const& lhs, box const& rhs) noexcept {
+    return lhs.min_ == rhs.min_ && lhs.max_ == rhs.max_;
+  }
+
   latlng min_, max_;
 };
 
