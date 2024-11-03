@@ -27,6 +27,9 @@ struct latlng {
   }
 
   std::array<double, 2> lnglat() const noexcept { return {lng_, lat_}; }
+  std::array<float, 2> lnglat_float() const noexcept {
+    return {static_cast<float>(lng_), static_cast<float>(lat_)};
+  }
 
   double lat_{0.0}, lng_{0.0};
 };
