@@ -87,6 +87,8 @@ struct box {
     return lat_overlaps && lng_overlaps;
   }
 
+  auto cista_members() { return std::tie(min_, max_); }
+
   friend bool operator==(box const& lhs, box const& rhs) noexcept {
     return lhs.min_ == rhs.min_ && lhs.max_ == rhs.max_;
   }
