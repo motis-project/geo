@@ -95,4 +95,24 @@ Candidate distance_to_polyline(latlng const& x, Polyline&& c) {
   return {min, best, best_segment_idx};
 }
 
+template <typename Candidate = polyline_candidate, typename Polyline>
+Candidate approx_squared_distance_to_polyline(
+    latlng const& x, Polyline&& c, double approx_distance_lng_degrees) {
+  auto min = std::numeric_limits<double>::max();
+  auto best = latlng{};
+  auto best_segment_idx = 0U;
+  auto segment_idx = 0U;
+  for (auto const [a, b] : utl::pairwise(c)) {
+    auto const [candidate, squared_dist] =
+        approx_closest_on_segment(x, a, b, approx_distance_lng_degrees);
+    if (squared_dist < min) {
+      min = squared_dist;
+      best = candidate;
+      best_segment_idx = segment_idx;
+    }
+    ++segment_idx;
+  }
+  return {min, best, best_segment_idx};
+}
+
 }  // namespace geo

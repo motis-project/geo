@@ -11,6 +11,23 @@
 
 namespace geo {
 
+constexpr static auto const kApproxDistanceLatDegrees =
+    geo::kEarthRadiusMeters * geo::kPI / 180;
+
+double lower_bound_distance_lng_degrees(latlng const& reference) {
+  return std::clamp(1.0 - std::max(std::abs(reference.lat()),
+                                   std::abs(reference.lat())) /
+                              90.0,
+                    0.0, 1.0) *
+         kApproxDistanceLatDegrees;
+}
+
+double approx_distance_lng_degrees(latlng const& reference) {
+  return geo::distance(
+      reference, {reference.lat(),
+                  reference.lng() + (reference.lng() < 0.0 ? 1.0 : -1.0)});
+}
+
 std::ostream& operator<<(std::ostream& out, latlng const& pos) {
   return out << '(' << pos.lat_ << ", " << pos.lng_ << ")";
 }
@@ -122,6 +139,53 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
   auto const beta = to_rad(90.0) - start_angle;
   auto const seg_offset = start_vec.length() * std::sin(beta);
   return merc_to_latlng(merc_from + seg_offset * seg_dir.normalize());
+}
+
+std::pair<latlng, double> approx_closest_on_segment(
+    latlng const& x, latlng const& segment_from, latlng const& segment_to,
+    double approx_distance_lng_degrees) {
+  auto const to_approx_xy = [&](latlng const& ll, latlng const& ref) {
+    auto const xdiff = ll.lng_ - ref.lng_;
+    return xy{(xdiff > 180.0 ? (360.0 - std::abs(xdiff)) : xdiff) *
+                  approx_distance_lng_degrees,
+              (ll.lat_ - ref.lat_) * kApproxDistanceLatDegrees};
+  };
+  auto const squared_diff = [&](xy<double> const& a, xy<double> const& b) {
+    return (a - b).dot(a - b);
+  };
+  auto const proj_x = to_approx_xy(x, x);
+  auto const proj_from = to_approx_xy(segment_from, x);
+  auto const proj_to = to_approx_xy(segment_to, x);
+
+  if (proj_x == proj_from) {
+    return {x, squared_diff(proj_x, proj_from)};
+  }
+  if (proj_x == proj_to) {
+    return {x, squared_diff(proj_x, proj_to)};
+  }
+
+  auto const segment = proj_to - proj_from;
+  auto const squared_len = segment.dot(segment);
+  if (squared_len < kEpsilon) {
+    return {segment_from, squared_diff(proj_x, proj_from)};
+  }
+
+  auto const dot_from = (proj_x - proj_from).dot(segment);
+  if (dot_from < 0.0) {
+    return {segment_from, squared_diff(proj_x, proj_from)};
+  }
+  auto const dot_to = (proj_x - proj_to).dot(proj_from - proj_to);
+  if (dot_to < 0.0) {
+    return {segment_to, squared_diff(proj_x, proj_to)};
+  }
+
+  auto const point_on_segment =
+      (proj_from * dot_to + proj_to * dot_from) / squared_len;
+  auto const xcoord =
+      point_on_segment.x_ / approx_distance_lng_degrees + x.lng_;
+  return {latlng{point_on_segment.y_ / kApproxDistanceLatDegrees + x.lat_,
+                 xcoord > 180.0 ? xcoord - 360.0 : xcoord},  //
+          squared_diff(proj_x, point_on_segment)};
 }
 
 // Destination point given distance and bearing from start point
