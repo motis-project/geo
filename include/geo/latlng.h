@@ -43,6 +43,14 @@ latlng midpoint(latlng const&, latlng const&);
 latlng closest_on_segment(latlng const& x, latlng const& segment_from,
                           latlng const& segment_to);
 
+std::pair<latlng, double> approx_closest_on_segment(
+    latlng const& x, latlng const& segment_from, latlng const& segment_to,
+    double approx_distance_lng_degrees);
+
+double lower_bound_distance_lng_degrees(latlng const&);
+
+double approx_distance_lng_degrees(latlng const&);
+
 latlng destination_point(latlng const& source, double const distance,
                          double const bearing);
 
