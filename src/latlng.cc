@@ -11,14 +11,8 @@
 
 namespace geo {
 
-constexpr static auto const kApproxDistanceLatDegrees =
-    geo::kEarthRadiusMeters * geo::kPI / 180;
-
 double lower_bound_distance_lng_degrees(latlng const& reference) {
-  return std::clamp(1.0 - std::max(std::abs(reference.lat()),
-                                   std::abs(reference.lat())) /
-                              90.0,
-                    0.0, 1.0) *
+  return std::clamp(1.0 - std::abs(reference.lat()) / 90.0, 0.0, 1.0) *
          kApproxDistanceLatDegrees;
 }
 
@@ -34,6 +28,15 @@ std::ostream& operator<<(std::ostream& out, latlng const& pos) {
 
 double distance(latlng const& a, latlng const& b) {
   return boost::geometry::distance(a, b) * kEarthRadiusMeters;
+}
+
+double approx_squared_distance(latlng const& a, latlng const& b,
+                               double const approx_distance_lng_degrees) {
+  auto const y = std::abs(a.lat() - b.lat()) * kApproxDistanceLatDegrees;
+  auto const xdiff = std::abs(a.lng() - b.lng());
+  auto const x =
+      (xdiff > 180.0 ? (360.0 - xdiff) : xdiff) * approx_distance_lng_degrees;
+  return x * x + y * y;
 }
 
 // following non-public boost implementation
@@ -143,7 +146,7 @@ latlng closest_on_segment(latlng const& x, latlng const& segment_from,
 
 std::pair<latlng, double> approx_closest_on_segment(
     latlng const& x, latlng const& segment_from, latlng const& segment_to,
-    double approx_distance_lng_degrees) {
+    double const approx_distance_lng_degrees) {
   auto const to_approx_xy = [&](latlng const& ll, latlng const& ref) {
     auto const xdiff = ll.lng_ - ref.lng_;
     return xy{(xdiff > 180.0 ? (360.0 - std::abs(xdiff)) : xdiff) *

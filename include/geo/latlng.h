@@ -36,6 +36,9 @@ struct latlng {
 
 double distance(latlng const&, latlng const&);
 
+double approx_squared_distance(latlng const&, latlng const&,
+                               double approx_distance_lng_degrees);
+
 double bearing(latlng const&, latlng const&);
 
 latlng midpoint(latlng const&, latlng const&);
