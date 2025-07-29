@@ -87,6 +87,14 @@ struct box {
     return lat_overlaps && lng_overlaps;
   }
 
+  bool empty() const { return max_.lat_ < min_.lat_ || max_.lng_ < min_.lng_; }
+
+  latlng centroid() const {
+    return empty() ? latlng{}
+                   : latlng{(min_.lat_ + max_.lat_) / 2.0,
+                            (min_.lng_ + max_.lng_) / 2.0};
+  }
+
   auto cista_members() { return std::tie(min_, max_); }
 
   friend bool operator==(box const& lhs, box const& rhs) noexcept {
