@@ -20,66 +20,62 @@
 #include "utl/zip.h"
 
 #include "geo/box.h"
+#include "geo/fixed_latlng.h"
 #include "geo/latlng.h"
 
 namespace geo {
 
-struct fixed_latlng {
-  static constexpr auto const kCoordinatePrecision = 1'000'0000;
-
-  static std::int32_t double_to_fix(double const c) noexcept {
-    return static_cast<int32_t>(std::round(c * kCoordinatePrecision));
-  }
-  static constexpr double fix_to_double(std::int32_t const c) noexcept {
-    return static_cast<double>(c) / kCoordinatePrecision;
-  }
-
-  static fixed_latlng from_latlng(latlng const& x) {
-    return {double_to_fix(x.lat()), double_to_fix(x.lng())};
-  }
-
-  double lat() const { return fix_to_double(lat_); }
-  double lng() const { return fix_to_double(lng_); }
-
-  operator latlng() const { return {lat(), lng()}; }
-
-  std::int32_t lat_, lng_;
-};
-
-template <typename T>
-using mm_vec = cista::basic_mmap_vec<T, std::uint64_t>;
-
-template <typename K, typename V, std::size_t N>
-using mm_nvec =
-    cista::basic_nvec<K, mm_vec<V>, mm_vec<std::uint64_t>, N, std::uint64_t>;
-
-tg_ring* convert_ring(std::vector<tg_point>& ring_tmp, auto&& osm_ring) {
-  ring_tmp.clear();
-  for (auto const& p : osm_ring) {
-    ring_tmp.emplace_back(tg_point{p.lng(), p.lat()});
-  }
-  return tg_ring_new(ring_tmp.data(), static_cast<int>(ring_tmp.size()));
-}
+template <typename Idx>
+struct area_db_lookup;
 
 template <typename Idx>
-struct area_db {
+struct area_db_storage {
+  friend struct area_db_lookup<Idx>;
+
+  template <typename T>
+  using mm_vec = cista::basic_mmap_vec<T, std::uint64_t>;
+
+  template <typename K, typename V, std::size_t N>
+  using mm_nvec =
+      cista::basic_nvec<K, mm_vec<V>, mm_vec<std::uint64_t>, N, std::uint64_t>;
+
   using inner_rings_t = mm_nvec<Idx, fixed_latlng, 3U>;
   using outer_rings_t = mm_nvec<Idx, fixed_latlng, 2U>;
- using rtree_results_t = std::basic_string<Idx, cista::char_traits<Idx>>;
 
-  area_db() = default;
+  area_db_storage(std::filesystem::path const& p,
+                  cista::mmap::protection const mode)
+      : p_{std::move(p)},
+        mode_{mode},
+        outer_rings_{{mm_vec<std::uint64_t>{mm("outer_rings_idx_0.bin")},
+                      mm_vec<std::uint64_t>{mm("outer_rings_idx_1.bin")}},
+                     mm_vec<fixed_latlng>{mm("outer_rings_data.bin")}},
+        inner_rings_{{mm_vec<std::uint64_t>{mm("inner_rings_idx_0.bin")},
+                      mm_vec<std::uint64_t>{mm("inner_rings_idx_1.bin")},
+                      mm_vec<std::uint64_t>{mm("inner_rings_idx_2.bin")}},
+                     mm_vec<fixed_latlng>{mm("inner_rings_data.bin")}} {}
 
-  area_db(std::filesystem::path p, cista::mmap::protection const mode)
-      : db_{std::make_unique<db>(std::move(p), mode)} {}
-
-  ~area_db() {
-    for (auto const& mp : idx_) {
-      tg_geom_free(mp);
-    }
-    rtree_free(rtree_);
+  template <typename OuterRings, typename InnerRings>
+  void add_area(OuterRings&& outers, InnerRings&& inners) {
+    outer_rings_.emplace_back(outers);
+    inner_rings_.emplace_back(inners);
   }
 
-  void build_index() {
+private:
+  cista::mmap mm(char const* file) {
+    return cista::mmap{(p_ / file).generic_string().c_str(), mode_};
+  }
+
+  std::filesystem::path p_;
+  cista::mmap::protection mode_;
+  outer_rings_t outer_rings_;
+  inner_rings_t inner_rings_;
+};
+
+template <typename Idx>
+struct area_db_lookup {
+  using rtree_results_t = std::basic_string<Idx, cista::char_traits<Idx>>;
+
+  area_db_lookup(area_db_storage<Idx> const& s) : rtree_{rtree_new()} {
     struct tmp {
       std::vector<tg_point> ring_tmp_;
       std::vector<tg_ring*> inner_tmp_;
@@ -87,23 +83,31 @@ struct area_db {
       rtree_results_t areas_;
     };
 
+    auto const convert_ring = [](std::vector<tg_point>& ring_tmp,
+                                 auto&& osm_ring) -> tg_ring* {
+      ring_tmp.clear();
+      for (auto const& p : osm_ring) {
+        ring_tmp.emplace_back(tg_point{p.lng(), p.lat()});
+      }
+      return tg_ring_new(ring_tmp.data(), static_cast<int>(ring_tmp.size()));
+    };
+
     auto mutex = std::mutex{};
     auto polys_to_free = std::vector<tg_poly*>{};
 
-    idx_.resize(db_->outer_rings_.size());
+    idx_.resize(s.outer_rings_.size());
     utl::parallel_for_run_threadlocal<tmp>(
-        db_->outer_rings_.size(), [&](tmp& tmp, std::size_t const i) {
+        s.outer_rings_.size(), [&](tmp& tmp, std::size_t const i) {
           tmp.polys_tmp_.clear();
 
           auto const area_idx = Idx{i};
-          auto const& outer_rings = db_->outer_rings_[area_idx];
+          auto const& outer_rings = s.outer_rings_[area_idx];
 
           auto box = geo::box{};
           for (auto const [outer_idx, outer_ring] :
                utl::enumerate(outer_rings)) {
             tmp.inner_tmp_.clear();
-            for (auto const inner_ring :
-                 db_->inner_rings_[area_idx][outer_idx]) {
+            for (auto const inner_ring : s.inner_rings_[area_idx][outer_idx]) {
               tmp.inner_tmp_.emplace_back(
                   convert_ring(tmp.ring_tmp_, inner_ring));
             }
@@ -139,9 +143,30 @@ struct area_db {
           }
         });
 
-    for (auto const& p : polys_to_free) {
-      tg_poly_free(p);
+    for (auto* x : polys_to_free) {
+      tg_poly_free(x);
     }
+  }
+
+  area_db_lookup(area_db_lookup&& o) { *this = std::move(o); }
+
+  area_db_lookup& operator=(area_db_lookup&& o) {
+    if (&o != this) {
+      rtree_ = o.rtree_;
+      idx_ = std::move(o.idx_);
+      o.rtree_ = nullptr;
+    }
+    return *this;
+  }
+
+  area_db_lookup(area_db_lookup const&) = delete;
+  area_db_lookup& operator=(area_db_lookup const&) = delete;
+
+  ~area_db_lookup() {
+    for (auto const& mp : idx_) {
+      tg_geom_free(mp);
+    }
+    rtree_free(rtree_);
   }
 
   void lookup(geo::latlng const& c, rtree_results_t& rtree_results) const {
@@ -150,30 +175,13 @@ struct area_db {
     rtree_search(
         rtree_, min.data(), nullptr,
         [](double const*, double const*, void const* item, void* udata) {
-          auto const area = Idx{
-              static_cast<Idx::value_t>(reinterpret_cast<std::intptr_t>(item))};
+          auto const area = Idx{static_cast<typename Idx::value_t>(
+              reinterpret_cast<std::intptr_t>(item))};
           reinterpret_cast<rtree_results_t*>(udata)->push_back(area);
           return true;
         },
         &rtree_results);
     utl::erase_if(rtree_results, [&](Idx const a) { return !is_within(c, a); });
-  }
-
-  template <typename OuterRings, typename InnerRings>
-  std::size_t add_area(OuterRings&& outers, InnerRings&& inners) {
-    namespace v = std::ranges::views;
-    if (db_ != nullptr && db_->mode_ == cista::mmap::protection::WRITE) {
-      auto const ring_to_coordinates = [&](auto&& r) {
-        return r | v::transform(fixed_latlng::from_latlng);
-      };
-
-      db_->outer_rings_.emplace_back(outers |
-                                     v::transform(ring_to_coordinates));
-      db_->inner_rings_.emplace_back(inners | v::transform([&](auto&& r) {
-                                       return r |
-                                              v::transform(ring_to_coordinates);
-                                     }));
-    }
   }
 
   bool is_within(geo::latlng const c, Idx const area) const {
@@ -182,29 +190,6 @@ struct area_db {
     tg_geom_free(point);
     return result;
   }
-
-  struct db {
-    db(std::filesystem::path const& p, cista::mmap::protection const mode)
-        : p_{std::move(p)},
-          mode_{mode},
-          outer_rings_{{mm_vec<std::uint64_t>{mm("outer_rings_idx_0.bin")},
-                        mm_vec<std::uint64_t>{mm("outer_rings_idx_1.bin")}},
-                       mm_vec<fixed_latlng>{mm("outer_rings_data.bin")}},
-          inner_rings_{{mm_vec<std::uint64_t>{mm("inner_rings_idx_0.bin")},
-                        mm_vec<std::uint64_t>{mm("inner_rings_idx_1.bin")},
-                        mm_vec<std::uint64_t>{mm("inner_rings_idx_2.bin")}},
-                       mm_vec<fixed_latlng>{mm("inner_rings_data.bin")}} {}
-
-    cista::mmap mm(char const* file) {
-      return cista::mmap{(p_ / file).generic_string().c_str(), mode_};
-    }
-
-    std::filesystem::path p_;
-    cista::mmap::protection mode_;
-    outer_rings_t outer_rings_;
-    inner_rings_t inner_rings_;
-  };
-  std::unique_ptr<db> db_;
 
   rtree* rtree_;
   std::vector<tg_geom*> idx_;
