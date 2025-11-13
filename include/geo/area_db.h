@@ -166,7 +166,9 @@ struct area_db_lookup {
     for (auto const& mp : idx_) {
       tg_geom_free(mp);
     }
-    rtree_free(rtree_);
+    if (rtree_ != nullptr) {
+      rtree_free(rtree_);
+    }
   }
 
   void lookup(geo::latlng const& c, rtree_results_t& rtree_results) const {
