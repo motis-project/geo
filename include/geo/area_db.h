@@ -60,6 +60,26 @@ struct area_db_storage {
     inner_rings_.emplace_back(inners);
   }
 
+  template <typename Area>
+  void add_osmium_area(Area&& a) {
+    namespace v = std::ranges::views;
+    auto const nodes_to_coordinates = [](auto&& n) {
+      return geo::fixed_latlng::from_latlng({n.lat(), n.lon()});
+    };
+    auto const ring_to_coordinates = [&](auto&& r) {
+      return r | v::transform(nodes_to_coordinates);
+    };
+    auto const outers = [&]() {
+      return a.outer_rings() | v::transform(ring_to_coordinates);
+    };
+    auto const inners = [&]() {
+      return a.outer_rings() | v::transform([&](auto&& r) {
+               return a.inner_rings(r) | v::transform(ring_to_coordinates);
+             });
+    };
+    add_area(outers(), inners());
+  }
+
 private:
   cista::mmap mm(char const* file) {
     return cista::mmap{(p_ / file).generic_string().c_str(), mode_};
