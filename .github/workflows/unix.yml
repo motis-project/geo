@@ -19,11 +19,11 @@ jobs:
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 11
+          sudo ./llvm.sh 21
           rm llvm.sh
-          sudo apt-get install -y --no-install-recommends clang-format-11
+          sudo apt-get install -y --no-install-recommends clang-format-21
       - name: Format files
-        run: find src include -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-11 -i
+        run: find src include -type f -a \( -name "*.cc" -o -name "*.h" \) -print0 | xargs -0 clang-format-21 -i
 
       - name: Check for differences
         run: |
@@ -51,16 +51,16 @@ jobs:
             cc: gcc-10
             mode: Debug
             os: ubuntu-latest
-          - name: Clang 11 Release
-            cxx: clang++-11
-            cc: clang-11
+          - name: Clang 21 Release
+            cxx: clang++-21
+            cc: clang-21
             mode: Release
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
             os: ubuntu-latest
           - name: Clang Tidy
-            cxx: clang++-11
-            cc: clang-11
+            cxx: clang++-21
+            cc: clang-21
             mode: Debug
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
@@ -80,15 +80,15 @@ jobs:
         run: sudo apt update
 
       - name: Install LLVM
-        if: matrix.config.os != 'macos-latest' && matrix.config.cc == 'clang-11'
+        if: matrix.config.os != 'macos-latest' && matrix.config.cc == 'clang-21'
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 11
+          sudo ./llvm.sh 21
           rm llvm.sh
-          sudo apt-get install -y --no-install-recommends libc++-11-dev libc++abi-11-dev clang-tidy-11
+          sudo apt-get install -y --no-install-recommends libc++-21-dev libc++abi-21-dev clang-tidy-21
 
       - name: Install Valgrind
         if: matrix.config.mode == 'Debug' && matrix.config.cc == 'gcc-10'
