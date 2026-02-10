@@ -39,9 +39,10 @@ double approx_squared_distance(latlng const& a, latlng const& b,
   return x * x + y * y;
 }
 
-// following non-public boost implementation
+// Initial bearing (CW from north) from p1 to p2.
+// http://www.movable-type.co.uk/scripts/latlong.html
 double bearing(latlng const& p1, latlng const& p2) {
-  double dlng = to_rad(p1.lng_) - to_rad(p2.lng_);  // CCW from NORTH!
+  double dlng = to_rad(p2.lng_) - to_rad(p1.lng_);
   double cos_p2lat = std::cos(to_rad(p2.lat_));
 
   auto bearing =
@@ -49,7 +50,7 @@ double bearing(latlng const& p1, latlng const& p2) {
                  std::cos(to_rad(p1.lat_)) * std::sin(to_rad(p2.lat_)) -
                      std::sin(to_rad(p1.lat_)) * cos_p2lat * std::cos(dlng));
 
-  return to_deg(std::fmod(bearing, 2 * kPI));
+  return to_deg(std::fmod(bearing + 2 * kPI, 2 * kPI));
 }
 
 // https://stackoverflow.com/a/4656937/10794188

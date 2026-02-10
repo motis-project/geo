@@ -5,6 +5,29 @@
 
 #include "geo/latlng.h"
 
+TEST_CASE("bearing_returns_cw_from_north") {
+  CHECK(geo::bearing({0.0, 0.0}, {10.0, 0.0}) == doctest::Approx(0.0));
+  CHECK(geo::bearing({0.0, 0.0}, {0.0, 10.0}) == doctest::Approx(90.0));
+  CHECK(geo::bearing({10.0, 0.0}, {0.0, 0.0}) == doctest::Approx(180.0));
+  CHECK(geo::bearing({0.0, 0.0}, {0.0, -10.0}) == doctest::Approx(270.0));
+}
+
+TEST_CASE("bearing_known_cities") {
+  // London (51.5074 N, 0.1278 W) to Paris (48.8566 N, 2.3522 E)
+  // Paris is southeast of London — expected bearing ~150° (between 90° and 180°)
+  auto const london = geo::latlng{51.5074, -0.1278};
+  auto const paris = geo::latlng{48.8566, 2.3522};
+  auto const b = geo::bearing(london, paris);
+  CHECK(b > 90.0);
+  CHECK(b < 180.0);
+
+  // Roundtrip: bearing + destination_point should recover the target
+  auto const dist = geo::distance(london, paris);
+  auto const recovered = geo::destination_point(london, dist, b);
+  CHECK(recovered.lat_ == doctest::Approx(paris.lat_).epsilon(0.01));
+  CHECK(recovered.lng_ == doctest::Approx(paris.lng_).epsilon(0.01));
+}
+
 TEST_CASE("destination_point") {
   auto constexpr source1 = geo::latlng{40.0, -20.0};
   auto constexpr distance1 = 111800.0;
