@@ -25,3 +25,23 @@ TEST_CASE("path_polyline_format_test_google_polyline") {
   auto const decoded = geo::decode_polyline(encoded);
   CHECK(original == decoded);
 }
+
+TEST_CASE("polyline_format_precision_6") {
+  geo::polyline original{
+      {49.4859, -119.588}, {49.4858, -119.588}, {49.4859, -119.591}};
+
+  auto const encoded = geo::encode_polyline<6>(original);
+  CHECK("wckk}A~habcFfE?gEnzD" == encoded);
+
+  auto const decoded = geo::decode_polyline<6>(encoded);
+  CHECK(original == decoded);
+}
+
+TEST_CASE("polyline_format_precision_7_overflow") {
+  geo::polyline original{
+      {49.4859, -119.588}, {49.4858, -119.588}, {49.4859, -119.591}};
+
+  auto const encoded = geo::encode_polyline<7>(original);
+  auto const decoded = geo::decode_polyline<7>(encoded);
+  CHECK(original == decoded);
+}
