@@ -83,6 +83,23 @@ struct polyline_encoder {
   std::string buf_;
 };
 
+template <typename Fn>
+auto with_polyline_encoder(int8_t const precision, Fn&& fn) {
+  switch (precision) {
+    case 0: return fn(polyline_encoder<0>{});
+    case 1: return fn(polyline_encoder<1>{});
+    case 2: return fn(polyline_encoder<2>{});
+    case 3: return fn(polyline_encoder<3>{});
+    case 4: return fn(polyline_encoder<4>{});
+    case 5: return fn(polyline_encoder<5>{});
+    case 6: return fn(polyline_encoder<6>{});
+    case 7: return fn(polyline_encoder<7>{});
+    default:
+      throw std::runtime_error(
+          "unsupported precision for polyline encoder. supported are [0, 7]");
+  }
+}
+
 template <int64_t Precision = 5>
 std::string encode_polyline(geo::polyline const& polyline) {
   polyline_encoder<Precision> enc;

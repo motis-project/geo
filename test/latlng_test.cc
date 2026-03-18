@@ -14,7 +14,8 @@ TEST_CASE("bearing_returns_cw_from_north") {
 
 TEST_CASE("bearing_known_cities") {
   // London (51.5074 N, 0.1278 W) to Paris (48.8566 N, 2.3522 E)
-  // Paris is southeast of London — expected bearing ~150° (between 90° and 180°)
+  // Paris is southeast of London — expected bearing ~150° (between 90° and
+  // 180°)
   auto const london = geo::latlng{51.5074, -0.1278};
   auto const paris = geo::latlng{48.8566, 2.3522};
   auto const b = geo::bearing(london, paris);
@@ -190,5 +191,30 @@ TEST_CASE(
     CHECK(!(closest == to));
     CHECK(geo::distance(x, closest) < geo::distance(x, from));
     CHECK(geo::distance(x, closest) < geo::distance(x, to));
+  }
+}
+
+TEST_CASE("approx_squaredDistance") {
+
+  auto const eps = 5;
+  auto const tests = std::vector<std::array<geo::latlng, 2>>{
+      // simple coordinates
+      {{{0.0, 0.0}, {0.1, 0.0}}},
+      {{{0.0, 0.0}, {0.9, 0.0}}},
+      {{{0.0, 0.0}, {0.5, 0.0}}},
+      {{{0.0, 0.0}, {0.5, 0.2}}},
+      // close to segment
+      {{{1.0, 1.0}, {1.0010, 1.0011}}},
+      // wraparound
+      {{{0.0, 179.0}, {1.0, 179.9}}},
+      {{{0.0, 179.0}, {1.0, -179.9}}},
+      {{{1.0, 179.9}, {2.0, -179.9}}},
+      {{{1.0, -179.9}, {-1.0, 179.9}}},
+  };
+
+  for (auto const& [a, b] : tests) {
+    CHECK(std::abs(geo::distance(a, b) -
+                   std::sqrt(geo::approx_squared_distance(
+                       a, b, geo::approx_distance_lng_degrees(a)))) < eps);
   }
 }
