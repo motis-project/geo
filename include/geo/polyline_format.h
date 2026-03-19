@@ -38,13 +38,15 @@ struct polyline_encoder {
     last_lng_ = lng;
   }
 
-  bool push_nonzero_diff(geo::latlng const ll) {
-    int64_t const lat = std::llround(ll.lat_ * kPrecision);
-    int64_t const lng = std::llround(ll.lng_ * kPrecision);
+  bool push_nonzero_diff(geo::latlng const ll,
+                         int64_t const simplification = 0) {
+    int64_t const lat = std::llrint(ll.lat_ * kPrecision);
+    int64_t const lng = std::llrint(ll.lng_ * kPrecision);
 
     auto const lat_diff = lat - last_lat_;
     auto const lng_diff = lng - last_lng_;
-    if (lat_diff != 0 || lng_diff != 0) {
+    if (std::abs(lat_diff) > simplification ||
+        std::abs(lng_diff) > simplification) {
       push_difference(lat_diff);
       push_difference(lng_diff);
       last_lat_ = lat;
