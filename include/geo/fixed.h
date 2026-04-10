@@ -10,7 +10,7 @@
 
 namespace geo {
 
-using fixed_coord_t = int64_t;
+using fixed_coord_t = std::int64_t;
 
 using fixed_xy = boost::geometry::model::d2::point_xy<fixed_coord_t>;
 
