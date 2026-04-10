@@ -4,6 +4,10 @@
 
 namespace geo {
 
+constexpr auto kTileSize = 4096;
+using proj = geo::webmercator<kTileSize, 20>;
+constexpr auto kMaxZoomLevel = proj::kMaxZoomLevel;
+
 struct tile_range;
 using tile_iterator_bounds = bounds<uint32_t>;
 
