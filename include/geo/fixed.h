@@ -14,7 +14,7 @@ using fixed_coord_t = int64_t;
 
 using fixed_xy = boost::geometry::model::d2::point_xy<fixed_coord_t>;
 
-const fixed_xy invalid_xy{std::numeric_limits<fixed_coord_t>::max(),
+constexpr auto invalid_xy = fixed_xy{std::numeric_limits<fixed_coord_t>::max(),
                           std::numeric_limits<fixed_coord_t>::max()};
 
 constexpr fixed_coord_t kFixedCoordMin = 0;
