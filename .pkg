@@ -22,3 +22,15 @@
   url=git@github.com:triptix-tech/rtree.c.git
   branch=master
   commit=6ed73a7dc4f1184f2b5b2acd8ac1c2b28a273057
+[clipper]
+  url=git@github.com:motis-project/clipper.git
+  branch=master
+  commit=2abf72015b85f1cfd38706b21d4f28b8c359c7d5
+[protozero]
+  url=git@github.com:motis-project/protozero.git
+  branch=master
+  commit=a94574f49d3820dc2f90121f8d5c5ffb6210b5b2
+[variant]
+  url=git@github.com:motis-project/variant.git
+  branch=master
+  commit=5aa73631dc969087c77433a5cdef246303051f69

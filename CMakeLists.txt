@@ -4,7 +4,7 @@ project(geo)
 include(cmake/pkg.cmake)
 include(cmake/clang-tidy.cmake)
 
-file(GLOB_RECURSE geo-files src/*.cc)
+file(GLOB_RECURSE geo-files src/*.cc src/fixed/*.cc)
 add_library(geo STATIC ${geo-files})
 target_compile_features(geo PUBLIC cxx_std_17)
 target_include_directories(geo PUBLIC include)
@@ -13,7 +13,7 @@ if (NOT MSVC)
 else()
   target_compile_definitions(geo PUBLIC _USE_MATH_DEFINES)
 endif()
-target_link_libraries(geo boost utl cista tg rtree)
+target_link_libraries(geo boost utl cista tg rtree clipper mpark_variant protozero)
 
 file(GLOB_RECURSE geo-test-files test/*.cc)
 
