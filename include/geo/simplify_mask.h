@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <cstring>
 
-#include <sstream>
-#include <stack>
 #include <string>
 #include <vector>
 
@@ -54,18 +52,31 @@ uint64_t sq_perpendicular_dist(Coord const& source, Coord const& target,
 }
 
 using range_t = std::pair<size_t, size_t>;
-using stack_t = std::stack<range_t, std::vector<range_t>>;
+
+// Reusable scratch for the Douglas-Peucker level sweep. Hoist one out of the
+// per-geometry loop (e.g. `thread_local`) so the buffers keep their capacity
+// across calls instead of re-allocating for every geometry. `stack_` is a plain
+// vector used as a LIFO -- unlike `std::stack{vec}`, a reserve on it actually
+// sticks.
+struct simplify_ctx {
+  std::vector<range_t> stack_;
+  std::vector<bool> mask_;
+  std::vector<uint8_t> first_level_;
+};
 
 template <typename Polyline>
 bool process_level(Polyline const& line, uint64_t const threshold,
-                   stack_t& stack, std::vector<bool>& mask) {
+                   simplify_ctx& ctx, uint8_t const level = 0,
+                   bool const record_first_level = false) {
+  auto& stack = ctx.stack_;
+  auto& mask = ctx.mask_;
   assert(stack.empty());
 
   auto last = 0U;
   for (auto i = 1U; i < mask.size(); ++i) {
     if (mask[i]) {
       if (i - last > 1U) {
-        stack.emplace(last, i);
+        stack.emplace_back(last, i);
       }
 
       last = i;
@@ -77,8 +88,8 @@ bool process_level(Polyline const& line, uint64_t const threshold,
   }
 
   while (!stack.empty()) {
-    auto const pair = stack.top();
-    stack.pop();
+    auto const pair = stack.back();
+    stack.pop_back();
 
     uint64_t max_dist = 0;
     auto farthest_entry_index = pair.second;
@@ -95,11 +106,14 @@ bool process_level(Polyline const& line, uint64_t const threshold,
 
     if (max_dist >= threshold) {
       mask[farthest_entry_index] = true;
+      if (record_first_level) {
+        ctx.first_level_[farthest_entry_index] = level;
+      }
       if (pair.first < farthest_entry_index) {
-        stack.emplace(pair.first, farthest_entry_index);
+        stack.emplace_back(pair.first, farthest_entry_index);
       }
       if (farthest_entry_index < pair.second) {
-        stack.emplace(farthest_entry_index, pair.second);
+        stack.emplace_back(farthest_entry_index, pair.second);
       }
     }
   }
@@ -114,29 +128,27 @@ simplify_mask_t make_simplify_mask(Polyline const& line,
                                    uint32_t const pixel_precision = 1) {
   simplify_mask_t result;
 
-  std::vector<bool> mask(line.size(), false);
-  mask.front() = true;
-  mask.back() = true;
-
-  std::vector<detail::range_t> stack_mem;
-  stack_mem.reserve(line.size());
-  detail::stack_t stack{stack_mem};
+  detail::simplify_ctx ctx;
+  ctx.mask_.assign(line.size(), false);
+  ctx.mask_.front() = true;
+  ctx.mask_.back() = true;
+  ctx.stack_.reserve(line.size());
 
   for (auto z = 0; z <= kMaxSimplifyZoomLevel; ++z) {
     uint64_t const delta = static_cast<uint64_t>(pixel_precision)
                            << (kMaxSimplifyZoomLevel - z);
     uint64_t const threshold = delta * delta;
 
-    auto const done = detail::process_level(line, threshold, stack, mask);
+    auto const done = detail::process_level(line, threshold, ctx);
 
     if (done) {
       for (auto i = z; i <= kMaxSimplifyZoomLevel; ++i) {
-        result.push_back(mask);
+        result.push_back(ctx.mask_);
       }
       break;
     }
 
-    result.push_back(mask);
+    result.push_back(ctx.mask_);
   }
 
   assert(result.size() == kMaxSimplifyZoomLevel + 1);
@@ -176,45 +188,107 @@ void apply_simplify_mask(std::vector<bool> const& mask, Polyline& line) {
   line.erase(first, end(line));
 }
 
-inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
-  auto lvls = uint32_t{0};
-  auto size = static_cast<uint32_t>(mask[0].size());
-
-  std::stringstream ss;
-  ss.write(reinterpret_cast<char*>(&lvls), sizeof lvls);
-  ss.write(reinterpret_cast<char*>(&size), sizeof size);
+// Pack the cumulative per-level simplify bitmask into the serialized byte
+// stream: a 4-byte bitset of which levels are stored, a 4-byte point count,
+// then, for each stored level, one bit per point (LSB-first, bits run
+// continuously across levels). `num_levels` levels are considered; level `i` is
+// emitted iff `level_stored(i)` and its bit for point `pt` is `bit(i, pt)`.
+// Both a materialized `simplify_mask_t` and the fused `first_level`
+// representation feed this via different callbacks.
+template <typename LevelStored, typename Bit>
+inline std::string emit_simplify_mask(uint32_t const n, int const num_levels,
+                                      LevelStored&& level_stored, Bit&& bit) {
+  uint32_t lvls = 0;
+  std::string out(2 * sizeof(uint32_t), '\0');
+  std::memcpy(out.data() + sizeof(uint32_t), &n, sizeof(uint32_t));
 
   char buf = 0;
   auto buf_pos = 0;
-
-  for (auto i = 0U; i < mask.size(); ++i) {
-    if (i + 1 < mask.size() && mask[i] == mask[i + 1]) {
+  for (auto i = 0; i < num_levels; ++i) {
+    if (!level_stored(i)) {
       continue;
     }
-
-    lvls |= 1 << i;
-
-    for (auto bit : mask[i]) {
-      buf |= static_cast<int>(bit) << buf_pos;
-
+    lvls |= 1U << i;
+    for (uint32_t pt = 0; pt < n; ++pt) {
+      buf |= static_cast<int>(bit(i, pt)) << buf_pos;
       if (++buf_pos == 8) {
-        ss.put(buf);
+        out.push_back(buf);
         buf = 0;
         buf_pos = 0;
       }
     }
   }
-
   if (buf_pos != 0) {
-    ss.put(buf);
+    out.push_back(buf);
   }
 
-  auto str = ss.str();
-  std::memcpy(
-      const_cast<char*>(  // NOLINT(cppcoreguidelines-pro-type-const-cast)
-          str.data()),
-      reinterpret_cast<char const*>(&lvls), sizeof lvls);
-  return str;
+  std::memcpy(out.data(), &lvls, sizeof(uint32_t));
+  return out;
+}
+
+inline std::string serialize_simplify_mask(simplify_mask_t const& mask) {
+  auto const num_levels = static_cast<int>(mask.size());
+  return emit_simplify_mask(
+      static_cast<uint32_t>(mask[0].size()), num_levels,
+      // A level is stored iff it is the last or differs from the next.
+      [&](int const i) {
+        return i + 1 >= num_levels || mask[i] != mask[i + 1];
+      },
+      [&](int const i, uint32_t const pt) { return mask[i][pt]; });
+}
+
+// Fused equivalent of `serialize_simplify_mask(make_simplify_mask(line))` that
+// avoids materializing (and heap-allocating) one `std::vector<bool>` snapshot
+// per zoom level. Instead it records, per point, the first zoom level at which
+// it is kept (`first_level`), then emits the exact same byte stream. The masks
+// are cumulative (a point kept at level z stays kept), so `mask[i][pt]` is
+// simply `first_level[pt] <= i`.
+template <typename Polyline>
+std::string make_serialize_simplify_mask(Polyline const& line,
+                                         uint32_t const pixel_precision = 1) {
+  auto const n = static_cast<uint32_t>(line.size());
+
+  // Reused across calls on the same thread to avoid re-allocating the scratch
+  // buffers for every geometry in the (hot) feature-packing loop. `assign`
+  // keeps the existing capacity. kSimplifyZoomLevels marks "never kept".
+  static thread_local detail::simplify_ctx ctx;
+  auto& first_level = ctx.first_level_;
+  first_level.assign(n, static_cast<uint8_t>(kSimplifyZoomLevels));
+  ctx.mask_.assign(n, false);
+  if (n > 0) {
+    first_level.front() = 0;
+    first_level.back() = 0;
+    ctx.mask_.front() = true;
+    ctx.mask_.back() = true;
+  }
+  ctx.stack_.clear();  // keeps capacity for the next geometry
+
+  bool done = false;
+  for (auto z = 0; z <= kMaxSimplifyZoomLevel && !done; ++z) {
+    uint64_t const delta = static_cast<uint64_t>(pixel_precision)
+                           << (kMaxSimplifyZoomLevel - z);
+    uint64_t const threshold = delta * delta;
+    done = detail::process_level(line, threshold, ctx, static_cast<uint8_t>(z),
+                                 /*record_first_level=*/true);
+  }
+
+  // added[z] == "level z introduced at least one new point".
+  bool added[kSimplifyZoomLevels] = {};
+  for (auto const lvl : first_level) {
+    if (lvl < kSimplifyZoomLevels) {
+      added[lvl] = true;
+    }
+  }
+
+  // Same byte stream as serialize_simplify_mask, sourced from `first_level`:
+  // level i is stored iff it is the last or level i+1 added points, and a point
+  // is set at level i iff it was first kept at or before i.
+  return emit_simplify_mask(
+      n, kSimplifyZoomLevels,
+      [&](int const i) {
+        return i + 1 >= kSimplifyZoomLevels || added[i + 1];
+      },
+      [&](int const i, uint32_t const pt) { return first_level[pt] <= i; });
 }
 
 struct simplify_mask_reader {
@@ -274,19 +348,17 @@ void simplify(Polyline& line, uint64_t const pixel_precision = 1) {
   if (line.empty()) {
     throw std::runtime_error{"simplify: empty polyline"};
   }
-  std::vector<bool> mask(line.size(), false);
-  mask.front() = true;
-  mask.back() = true;
-
-  std::vector<detail::range_t> stack_mem;
-  stack_mem.reserve(line.size());
-  detail::stack_t stack{stack_mem};
+  detail::simplify_ctx ctx;
+  ctx.mask_.assign(line.size(), false);
+  ctx.mask_.front() = true;
+  ctx.mask_.back() = true;
+  ctx.stack_.reserve(line.size());
 
   uint64_t const threshold = pixel_precision * pixel_precision;
 
-  detail::process_level(line, threshold, stack, mask);
+  detail::process_level(line, threshold, ctx);
 
-  apply_simplify_mask(mask, line);
+  apply_simplify_mask(ctx.mask_, line);
 }
 
 }  // namespace geo
