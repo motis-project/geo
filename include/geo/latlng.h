@@ -59,6 +59,8 @@ latlng destination_point(latlng const& source, double const distance,
 
 uint32_t tile_hash_32(latlng const&);
 
+std::uint64_t morton_encode(latlng const&);
+
 }  // namespace geo
 
 #if __has_include("fmt/format.h")

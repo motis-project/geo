@@ -7,6 +7,7 @@
 #include "geo/constants.h"
 #include "geo/detail/register_latlng.h"
 #include "geo/tile.h"
+#include "geo/ufixed_latlng.h"
 #include "geo/webmercator.h"
 
 namespace geo {
@@ -218,6 +219,10 @@ latlng destination_point(geo::latlng const& source, double const distance,
 
   // convert back to deg
   return geo::latlng{to_deg(lat_dest), to_deg(lon_dest)};
+}
+
+std::uint64_t morton_encode(latlng const& v) {
+  return ufixed_latlng{v}.morton_encode();
 }
 
 }  // namespace geo
