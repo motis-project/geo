@@ -23,6 +23,6 @@
   branch=master
   commit=855982edf7efbba1798bacfea12997bf541f5661
 [libmorton]
-  url=git@github.com:Forceflow/libmorton.git
+  url=git@github.com:motis-project/libmorton.git
   branch=master
   commit=7923faa88d7e564020b2d5d408bf8c186ecbe363
