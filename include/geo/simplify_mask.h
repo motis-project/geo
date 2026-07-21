@@ -285,9 +285,7 @@ std::string make_serialize_simplify_mask(Polyline const& line,
   // is set at level i iff it was first kept at or before i.
   return emit_simplify_mask(
       n, kSimplifyZoomLevels,
-      [&](int const i) {
-        return i + 1 >= kSimplifyZoomLevels || added[i + 1];
-      },
+      [&](int const i) { return i + 1 >= kSimplifyZoomLevels || added[i + 1]; },
       [&](int const i, uint32_t const pt) { return first_level[pt] <= i; });
 }
 
