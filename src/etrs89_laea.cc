@@ -1,4 +1,4 @@
-#include "etrs89_laea.h"
+#include "geo/etrs89_laea.h"
 
 #include <cmath>
 
@@ -30,7 +30,7 @@ double q (const double phi) {
 
 double authalic_to_geodetic()
 
-latlng from_etrs89_laea(std::uint32_t northing, std::uint32_t easting) {
+latlng from_etrs89_laea(std::uint32_t easting, std::uint32_t northing) {
 
   auto const q = [](auto const phi) {
 
