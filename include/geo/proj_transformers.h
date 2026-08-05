@@ -12,7 +12,7 @@
 
 #include "geo/latlng.h"
 
-// https://github.com/motis-project/nigiri/commit/8c84336539fd02dfabd15e66f9f660ef577328e3
+// source: https://github.com/motis-project/nigiri/commit/8c84336539fd02dfabd15e66f9f660ef577328e3
 
 namespace geo {
 struct proj_context {
@@ -48,31 +48,29 @@ coord_op_factory_{
 wgs84_crs_{
     auth_factory_epsg_->createCoordinateReferenceSystem("4326")} {}
 
-  geo::latlng transform(std::string const& input_crs_spec,
-                        double const input_x,
-                        double const input_y) {
+  latlng transform(std::string const& input_crs_spec,
+                        double const input_y,
+                        double const input_x) {
     if (input_crs_spec.empty()) {
       // assume WGS84 with lat, lon order
-      return {input_x, input_y};
+      return {input_y, input_x};
     }
     auto const& transformer =
         utl::get_or_create(transformers_, input_crs_spec, [&]() {
           try {
             auto crs_spec = input_crs_spec;
-            // this format (used by some NeTEx files) is not recognized by PROJ
-            if (crs_spec.starts_with("EPSG::")) {
-              crs_spec = "urn:ogc:def:crs:" + crs_spec;
-            }
             auto input_crs =
                 NN_CHECK_THROW(nn_dynamic_pointer_cast<osgeo::proj::crs::CRS>(
                     osgeo::proj::io::createFromUserInput(crs_spec, db_ctx_)));
             auto list = coord_op_factory_->createOperations(
                 input_crs, wgs84_crs_, coord_op_ctx_);
-            auto coordinate_transformer = list[0]->coordinateTransformer(ctx_);
             utl::verify(!list.empty(),
                         "No coordinate operations "
                         "found for {} -> WGS84",
                         crs_spec);
+            auto coordinate_transformer =
+                list[0]->normalizeForVisualization()->coordinateTransformer(
+                    ctx_);
             return std::make_unique<proj_transformer>(proj_transformer{
                 .input_crs_ = std::move(input_crs),
                 .operations_ = std::move(list),
@@ -88,7 +86,7 @@ wgs84_crs_{
 
     auto const output_coord =
         transformer->transform(PJ_COORD{{input_x, input_y, 0.0, HUGE_VAL}});
-    return {output_coord.xy.x, output_coord.xy.y};
+    return {output_coord.xy.y, output_coord.xy.x};
   }
 
   osgeo::proj::io::DatabaseContextNNPtr db_ctx_;
