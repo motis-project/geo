@@ -12,7 +12,8 @@
 
 #include "geo/latlng.h"
 
-// source: https://github.com/motis-project/nigiri/commit/8c84336539fd02dfabd15e66f9f660ef577328e3
+// source:
+// https://github.com/motis-project/nigiri/commit/8c84336539fd02dfabd15e66f9f660ef577328e3
 
 namespace geo {
 struct proj_context {
@@ -39,18 +40,17 @@ struct proj_transformers {
       : db_ctx_{osgeo::proj::io::DatabaseContext::create()},
         auth_factory_{osgeo::proj::io::AuthorityFactory::create(db_ctx_, "")},
         auth_factory_epsg_{
-    osgeo::proj::io::AuthorityFactory::create(db_ctx_, "EPSG")},
-coord_op_ctx_{
-    osgeo::proj::operation::CoordinateOperationContext::create(
-        auth_factory_, nullptr, 0.0)},
-coord_op_factory_{
-    osgeo::proj::operation::CoordinateOperationFactory::create()},
-wgs84_crs_{
-    auth_factory_epsg_->createCoordinateReferenceSystem("4326")} {}
+            osgeo::proj::io::AuthorityFactory::create(db_ctx_, "EPSG")},
+        coord_op_ctx_{
+            osgeo::proj::operation::CoordinateOperationContext::create(
+                auth_factory_, nullptr, 0.0)},
+        coord_op_factory_{
+            osgeo::proj::operation::CoordinateOperationFactory::create()},
+        wgs84_crs_{
+            auth_factory_epsg_->createCoordinateReferenceSystem("4326")} {}
 
-  latlng transform(std::string const& input_crs_spec,
-                        double const input_y,
-                        double const input_x) {
+  latlng transform(std::string const& input_crs_spec, double const input_y,
+                   double const input_x) {
     if (input_crs_spec.empty()) {
       // assume WGS84 with lat, lon order
       return {input_y, input_x};
@@ -100,4 +100,4 @@ wgs84_crs_{
       transformers_;
 };
 
-}
+}  // namespace geo
