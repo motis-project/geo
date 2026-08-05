@@ -1,10 +1,16 @@
 #include "doctest/doctest.h"
 
-#include "geo/etrs89_laea.h"
+#include "geo/proj_transformers.h"
 
 using namespace geo;
 
 TEST_CASE("from_etrs89_laea") {
+  auto transformers = proj_transformers{};
+
+  auto const from_etrs89_laea = [&](auto const easting, auto const northing) {
+    return transformers.transform("urn:ogc:def:crs:EPSG::3035", easting, northing);
+  };
+
   auto const darmstadt = from_etrs89_laea(4224037, 2974258);
   CHECK(darmstadt.lng_ == doctest::Approx(8.651222));
   CHECK(darmstadt.lat_ == doctest::Approx(49.872833));

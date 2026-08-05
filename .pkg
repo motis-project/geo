@@ -26,3 +26,7 @@
   url=git@github.com:motis-project/libmorton.git
   branch=master
   commit=7923faa88d7e564020b2d5d408bf8c186ecbe363
+[PROJ]
+  url=git@github.com:motis-project/PROJ.git
+  branch=master
+  commit=27ed257526ddf6e2fd7a1a3c92a1d3de913ce34b
