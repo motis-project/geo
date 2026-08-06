@@ -13,7 +13,7 @@ if (NOT MSVC)
 else()
   target_compile_definitions(geo PUBLIC _USE_MATH_DEFINES)
 endif()
-target_link_libraries(geo boost utl cista tg rtree libmorton)
+target_link_libraries(geo boost utl cista tg rtree libmorton proj)
 
 file(GLOB_RECURSE geo-test-files test/*.cc)
 
