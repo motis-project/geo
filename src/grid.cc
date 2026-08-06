@@ -4,6 +4,7 @@
 #include <charconv>
 
 #include "utl/parser/csv_range.h"
+#include "utl/pipes/for_each.h"
 #include "utl/verify.h"
 
 #include "geo/proj_transformers.h"
