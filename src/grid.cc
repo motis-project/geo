@@ -77,7 +77,7 @@ box parse_inspire_grid_id(std::string_view const s) {
   return box{sw, ne};
 }
 
-grid<std::uint64_t> read_eurostat_population_grid(std::string_view const csv) {
+grid<std::uint64_t> parse_eurostat_population_grid(std::string_view const csv) {
   struct csv_grid_cell {
     utl::csv_col<utl::cstr, UTL_NAME("GRD_ID")> id_;
     utl::csv_col<std::uint64_t, UTL_NAME("T")> total_population_;

@@ -15,6 +15,6 @@ using grid = std::vector<grid_cell<T>>;
 
 box parse_inspire_grid_id(std::string_view);
 
-grid<std::uint64_t> read_eurostat_population_grid(std::string_view csv);
+grid<std::uint64_t> parse_eurostat_population_grid(std::string_view csv);
 
-} // namespace geo
+}  // namespace geo

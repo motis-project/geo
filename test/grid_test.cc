@@ -16,10 +16,44 @@ CRS3035RES1000mN2684000E4286000,185,96,89,51,113,21,89,152,22,11,161,16,4,0.9618
 
 TEST_CASE("parse_inspire_grid_id") {
   auto const b = parse_inspire_grid_id(kGridId);
-  CHECK(b.min_.lat_ == doctest::Approx(47.2595447));
-  CHECK(b.min_.lng_ == doctest::Approx(9.5247167));
-  CHECK(b.max_.lat_ == doctest::Approx(47.2686031));
-  CHECK(b.max_.lng_ == doctest::Approx(9.537839));
+  CHECK_EQ(b.min_.lat_, doctest::Approx(47.2595447));
+  CHECK_EQ(b.min_.lng_, doctest::Approx(9.5247167));
+  CHECK_EQ(b.max_.lat_, doctest::Approx(47.2686031));
+  CHECK_EQ(b.max_.lng_, doctest::Approx(9.537839));
 }
 
-TEST_CASE("population_grid") {}
+TEST_CASE("population_grid") {
+  auto const g = parse_eurostat_population_grid(kGridCSV);
+
+  REQUIRE_EQ(g.size(), 5U);
+
+  CHECK_EQ(g[0].b_.min_.lat_, doctest::Approx(47.2595447));
+  CHECK_EQ(g[0].b_.min_.lng_, doctest::Approx(9.5247167));
+  CHECK_EQ(g[0].b_.max_.lat_, doctest::Approx(47.2686031));
+  CHECK_EQ(g[0].b_.max_.lng_, doctest::Approx(9.537839));
+  CHECK_EQ(g[0].data_, 0U);
+
+  CHECK_EQ(g[1].b_.min_.lat_, doctest::Approx(47.2685461));
+  CHECK_EQ(g[1].b_.min_.lng_, doctest::Approx(9.5246347));
+  CHECK_EQ(g[1].b_.max_.lat_, doctest::Approx(47.2776044));
+  CHECK_EQ(g[1].b_.max_.lng_, doctest::Approx(9.5377592));
+  CHECK_EQ(g[1].data_, 25U);
+
+  CHECK_EQ(g[2].b_.min_.lat_, doctest::Approx(47.2506002));
+  CHECK_EQ(g[2].b_.min_.lng_, doctest::Approx(9.5379984));
+  CHECK_EQ(g[2].b_.max_.lat_, doctest::Approx(47.259657));
+  CHECK_EQ(g[2].b_.max_.lng_, doctest::Approx(9.5511207));
+  CHECK_EQ(g[2].data_, 0U);
+
+  CHECK_EQ(g[3].b_.min_.lat_, doctest::Approx(47.2596016));
+  CHECK_EQ(g[3].b_.min_.lng_, doctest::Approx(9.5379187));
+  CHECK_EQ(g[3].b_.max_.lat_, doctest::Approx(47.2686584));
+  CHECK_EQ(g[3].b_.max_.lng_, doctest::Approx(9.5510433));
+  CHECK_EQ(g[3].data_, 116U);
+
+  CHECK_EQ(g[4].b_.min_.lat_, doctest::Approx(47.2686031));
+  CHECK_EQ(g[4].b_.min_.lng_, doctest::Approx(9.537839));
+  CHECK_EQ(g[4].b_.max_.lat_, doctest::Approx(47.2776598));
+  CHECK_EQ(g[4].b_.max_.lng_, doctest::Approx(9.5509658));
+  CHECK_EQ(g[4].data_, 185U);
+}
