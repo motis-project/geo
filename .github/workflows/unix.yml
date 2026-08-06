@@ -65,7 +65,7 @@ jobs:
             cxxflags: -stdlib=libc++
             ldflags: -lc++abi
             lint: true
-            os: ubuntu-20.04
+            os: ubuntu-latest
     env:
       UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1
     steps:
