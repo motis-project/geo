@@ -9,7 +9,7 @@
 [utl]
   url=git@github.com:motis-project/utl.git
   branch=master
-  commit=2a2d9963b54c94e612d21763c37b960711d2b15f
+  commit=158339cb270d6cb2ed2d6e2baf876b8c32faeef0
 [cista]
   url=git@github.com:felixguendling/cista.git
   branch=master
