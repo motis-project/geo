@@ -1,9 +1,24 @@
 #include "doctest/doctest.h"
 
+#include <cmath>
 #include <array>
 #include <vector>
 
+#include "boost/geometry.hpp"
+
 #include "geo/latlng.h"
+
+namespace {
+
+double karney_distance(geo::latlng const& a, geo::latlng const& b) {
+  namespace bg = boost::geometry;
+  using point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
+  return bg::distance(
+      point{a.lng(), a.lat()}, point{b.lng(), b.lat()},
+      bg::strategy::distance::geographic<bg::strategy::karney>{});
+}
+
+}  // namespace
 
 TEST_CASE("bearing_returns_cw_from_north") {
   CHECK(geo::bearing({0.0, 0.0}, {10.0, 0.0}) == doctest::Approx(0.0));
@@ -213,8 +228,63 @@ TEST_CASE("approx_squaredDistance") {
   };
 
   for (auto const& [a, b] : tests) {
-    CHECK(std::abs(geo::distance(a, b) -
+    CHECK(std::abs(geo::haversine_distance(a, b) -
                    std::sqrt(geo::approx_squared_distance(
                        a, b, geo::approx_distance_lng_degrees(a)))) < eps);
   }
+}
+
+TEST_CASE("distance_wgs84") {
+  // Flinders Peak -> Buninyong, the example in Vincenty (1975), on GRS80
+  auto const flinders = geo::latlng{-(37.0 + 57.0 / 60.0 + 3.72030 / 3600.0),
+                                    144.0 + 25.0 / 60.0 + 29.52440 / 3600.0};
+  auto const buninyong = geo::latlng{-(37.0 + 39.0 / 60.0 + 10.15610 / 3600.0),
+                                     143.0 + 55.0 / 60.0 + 35.38390 / 3600.0};
+  CHECK(geo::distance(flinders, buninyong) ==
+        doctest::Approx(54972.271).epsilon(1e-5));
+
+  CHECK(geo::distance({49.87, 8.65}, {49.87, 8.65}) == 0.0);
+  CHECK(geo::distance({89.5, 10.0}, {89.5, 10.0}) == 0.0);
+
+  // antimeridian: ~22 m, not ~40000 km
+  CHECK(geo::distance({0.0, 179.9999}, {0.0, -179.9999}) ==
+        doctest::Approx(22.264).epsilon(1e-3));
+
+  // every tier, against Karney: local radii (< 30 km), andoyer (< 15000 km),
+  // karney (beyond, and above 80° latitude)
+  auto const offsets =
+      std::array{1e-6, 1e-4, 0.01, 0.1, 0.2, 0.3, 1.0, 10.0, 60.0, 120.0};
+  auto const directions = std::array<std::array<double, 2>, 4>{
+      {{1.0, 0.0}, {0.0, 1.0}, {0.7, 0.7}, {-0.6, 0.8}}};
+  auto max_rel_err = 0.0;
+  auto n = 0U;
+  for (auto lat = -89.0; lat <= 89.0; lat += 4.45) {
+    for (auto const lng : {-179.95, -30.0, 0.0, 8.65, 179.95}) {
+      for (auto const offset : offsets) {
+        for (auto const [dlat, dlng] : directions) {
+          auto const a = geo::latlng{lat, lng};
+          auto const b =
+              geo::latlng{std::clamp(lat + dlat * offset, -90.0, 90.0),
+                          lng + dlng * offset};
+          auto const exact = karney_distance(a, b);
+          if (exact == 0.0) {
+            continue;
+          }
+          auto const rel_err = std::abs(geo::distance(a, b) - exact) / exact;
+          max_rel_err = std::max(max_rel_err, rel_err);
+          CHECK(rel_err < 4e-5);
+          ++n;
+        }
+      }
+    }
+  }
+  // near-antipodal pairs (karney tier)
+  for (auto const lat : {-45.0, 0.0, 30.0}) {
+    auto const a = geo::latlng{lat, 10.0};
+    auto const b = geo::latlng{-lat + 0.3, -169.7};
+    CHECK(geo::distance(a, b) ==
+          doctest::Approx(karney_distance(a, b)).epsilon(1e-9));
+  }
+  CHECK(n > 7000U);
+  MESSAGE("pairs: " << n << ", max relative error: " << max_rel_err);
 }

@@ -48,8 +48,10 @@ struct box {
   }
 
   void extend(double dist_in_m) {
-    // The distance of latitude degrees in km is always the same (~111000.0)
-    double const d_lat = dist_in_m / 111000.0;
+    // A degree of latitude is 110574 m at the equator and up to 111694 m at
+    // the poles (WGS84 meridian). 110500 m is below that everywhere, with room
+    // for the error of distance(), so the box covers dist_in_m.
+    double const d_lat = dist_in_m / 110500.0;
 
     min_.lat_ -= d_lat;
     max_.lat_ += d_lat;

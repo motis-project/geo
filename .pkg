@@ -1,7 +1,7 @@
 [boost]
   url=git@github.com:motis-project/boost.git
   branch=boost-1.89.0
-  commit=b050b3988ba25ea7757462d26a38d225bfe20f75
+  commit=d2d7c6073b653494f9621dd58e6064d256742b3c
 [doctest]
   url=git@github.com:motis-project/doctest.git
   branch=master

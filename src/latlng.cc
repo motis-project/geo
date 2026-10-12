@@ -1,16 +1,79 @@
 #include "geo/latlng.h"
 
 #include <cmath>
+#include <cstddef>
+#include <algorithm>
+#include <array>
 
 #include "boost/geometry.hpp"
 
 #include "geo/constants.h"
 #include "geo/detail/register_latlng.h"
+#include "geo/rad_deg.h"
 #include "geo/tile.h"
 #include "geo/ufixed_latlng.h"
 #include "geo/webmercator.h"
 
 namespace geo {
+
+double haversine_distance(latlng const& a, latlng const& b) {
+  return boost::geometry::distance(a, b) * kEarthRadiusMeters;
+}
+
+namespace {
+
+struct meters_per_degree {
+  double lat_, lng_;
+};
+
+// WGS84 meridian (M) and prime-vertical (N cos lat) radius of curvature in
+// meters per degree at latitudes -90°, -89°, ..., 90°
+std::array<meters_per_degree, 181> make_local_radii_table() {
+  constexpr auto kA = 6378137.0;  // WGS84 semi-major axis
+  constexpr auto kF = 1.0 / 298.257223563;  // WGS84 flattening
+  constexpr auto kE2 = kF * (2.0 - kF);  // squared eccentricity
+
+  auto t = std::array<meters_per_degree, 181>{};
+  for (auto i = std::size_t{0U}; i != t.size(); ++i) {
+    auto const lat = to_rad(static_cast<double>(i) - 90.0);
+    auto const s = std::sin(lat);
+    auto const w = 1.0 - kE2 * s * s;
+    auto const meridian = kA * (1.0 - kE2) / (w * std::sqrt(w));
+    auto const prime_vertical = kA / std::sqrt(w);
+    t[i] = {meridian * kPI / 180.0,
+            prime_vertical * std::cos(lat) * kPI / 180.0};
+  }
+  return t;
+}
+
+// Flat earth with the WGS84 radii of curvature at the mean latitude, linearly
+// interpolated between the 1° table entries.
+double local_radii_distance(latlng const& a, latlng const& b) {
+  // function-local static: initialized on first use, also when called from
+  // another translation unit's static initializer
+  static auto const t = make_local_radii_table();
+  auto const f = std::clamp(0.5 * (a.lat() + b.lat()) + 90.0, 0.0, 180.0);
+  // std::uint32_t: double -> std::size_t has no single instruction on x86-64
+  auto const i = std::min(static_cast<std::uint32_t>(f), std::uint32_t{179U});
+  auto const r = f - static_cast<double>(i);
+  auto const lat_scale = t[i].lat_ + r * (t[i + 1].lat_ - t[i].lat_);
+  auto const lng_scale = t[i].lng_ + r * (t[i + 1].lng_ - t[i].lng_);
+
+  auto const y = (a.lat() - b.lat()) * lat_scale;
+  auto const xdiff = std::abs(a.lng() - b.lng());
+  auto const x = (xdiff > 180.0 ? (360.0 - xdiff) : xdiff) * lng_scale;
+  return std::sqrt(x * x + y * y);
+}
+
+template <typename Formula>
+double wgs84_distance(latlng const& a, latlng const& b) {
+  namespace bg = boost::geometry;
+  using point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
+  return bg::distance(point{a.lng(), a.lat()}, point{b.lng(), b.lat()},
+                      bg::strategy::distance::geographic<Formula>{});
+}
+
+}  // namespace
 
 double lower_bound_distance_lng_degrees(latlng const& reference) {
   return std::clamp(1.0 - std::abs(reference.lat()) / 90.0, 0.0, 1.0) *
@@ -18,7 +81,7 @@ double lower_bound_distance_lng_degrees(latlng const& reference) {
 }
 
 double approx_distance_lng_degrees(latlng const& reference) {
-  return geo::distance(
+  return haversine_distance(
       reference, {reference.lat(),
                   reference.lng() + (reference.lng() < 0.0 ? 1.0 : -1.0)});
 }
@@ -27,8 +90,38 @@ std::ostream& operator<<(std::ostream& out, latlng const& pos) {
   return out << '(' << pos.lat_ << ", " << pos.lng_ << ")";
 }
 
+// WGS84 geodesic distance in three tiers, cheapest first:
+//
+//  max(|lat a|, |lat b|)
+//   90 +-------------------------------------------------+
+//      |                     karney                      |
+//   80 +-------------+-------------------------+---------+
+//      | local radii |         andoyer         | karney  |
+//      |    ~7 ns    |         ~50 ns          |  ~1 us  |
+//    0 +-------------+-------------------------+---------+
+//      0           30 km                   15000 km  20004 km
+//                      distance (not to scale)
+//
+//  - local radii: <= 0.004% error up to 30 km at any latitude below 80° (the
+//    1° table's interpolation error), but fails where meridians converge
+//    (poles) and grows with distance beyond (0.008% at 50 km and 75-80°);
+//    its own result picks the next tier
+//  - andoyer (first order in flattening): <= 0.00125%, but breaks down below
+//    ~10 m and degrades towards the antipode; its own result picks the next
+//  - karney: exact everywhere
 double distance(latlng const& a, latlng const& b) {
-  return boost::geometry::distance(a, b) * kEarthRadiusMeters;
+  if (std::abs(a.lat()) < 80.0 && std::abs(b.lat()) < 80.0) {
+    auto const d = local_radii_distance(a, b);
+    if (d < 30'000.0) {
+      return d;
+    }
+    auto const andoyer =
+        wgs84_distance<boost::geometry::strategy::andoyer>(a, b);
+    if (andoyer < 15'000'000.0) {
+      return andoyer;
+    }
+  }
+  return wgs84_distance<boost::geometry::strategy::karney>(a, b);
 }
 
 double approx_squared_distance(latlng const& a, latlng const& b,

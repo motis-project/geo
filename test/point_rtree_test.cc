@@ -39,3 +39,29 @@ TEST_CASE("point rtree") {
     CHECK(r[0].first <= r[2].first);
   }
 }
+
+TEST_CASE("point rtree in_radius north and south at the radius") {
+  constexpr auto kRadius = 10'000.0;
+  // a degree of latitude is shortest at the equator (WGS84 meridian)
+  for (auto const lat : {0.0, 20.0, 35.0, 60.0, -35.0}) {
+    auto const center = geo::latlng{lat, 8.0};
+    for (auto const dir : {1.0, -1.0}) {
+      // the point straight north/south of center that is just inside kRadius
+      auto inside = 0.0, outside = 0.2;
+      for (auto i = 0; i != 60; ++i) {
+        auto const mid = (inside + outside) / 2.0;
+        if (geo::distance(center, {lat + dir * mid, 8.0}) < kRadius) {
+          inside = mid;
+        } else {
+          outside = mid;
+        }
+      }
+      auto const p = geo::latlng{lat + dir * inside, 8.0};
+      REQUIRE(geo::distance(center, p) < kRadius);
+      REQUIRE(geo::distance(center, p) > kRadius - 0.01);
+
+      auto const rtree = geo::make_point_rtree(std::vector{p});
+      CHECK(rtree.in_radius(center, kRadius).size() == 1U);
+    }
+  }
+}

@@ -34,7 +34,14 @@ struct latlng {
   double lat_{0.0}, lng_{0.0};
 };
 
+// WGS84 geodesic distance in meters, within 0.004% of the exact value
+// (Karney). Costs ~7 ns below 30 km, ~50 ns up to 15000 km, ~1 µs beyond and
+// above 80° latitude.
 double distance(latlng const&, latlng const&);
+
+// Great-circle distance in meters on a sphere with radius kEarthRadiusMeters,
+// the sphere of the approx_* functions and xyz. Up to 0.56% off distance().
+double haversine_distance(latlng const&, latlng const&);
 
 double approx_squared_distance(latlng const&, latlng const&,
                                double approx_distance_lng_degrees);

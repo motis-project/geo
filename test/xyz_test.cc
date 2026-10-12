@@ -48,7 +48,7 @@ TEST_CASE("xyz haversine_distance") {
       std::vector<double> row;
       row.reserve(latlng_pos.size());
       for (auto const& pos_b : latlng_pos) {
-        row.emplace_back(distance(pos_a, pos_b));
+        row.emplace_back(haversine_distance(pos_a, pos_b));
       }
       latlng_dists.emplace_back(std::move(row));
     }
@@ -99,7 +99,7 @@ TEST_CASE("xyz haversine_distance") {
     for (auto i = 0; i < kSize; ++i) {
       auto min_d = std::numeric_limits<double>::infinity();
       for (auto const& pos_b : latlng_pos_skip_self[i]) {
-        auto const d = distance(latlng_pos[i], pos_b);
+        auto const d = haversine_distance(latlng_pos[i], pos_b);
         if (d < min_d) {
           min_d = d;
         }
